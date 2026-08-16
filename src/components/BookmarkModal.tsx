@@ -10,6 +10,7 @@ interface BookmarkModalProps {
   categories: Category[];
   initialData?: Bookmark | null;
   defaultCategoryId?: string;
+  theme?: 'dark' | 'light' | 'oled' | 'cyber';
 }
 
 export const BookmarkModal: React.FC<BookmarkModalProps> = ({
@@ -19,6 +20,7 @@ export const BookmarkModal: React.FC<BookmarkModalProps> = ({
   categories,
   initialData,
   defaultCategoryId,
+  theme = 'dark',
 }) => {
   const [url, setUrl] = useState('');
   const [title, setTitle] = useState('');
@@ -49,7 +51,14 @@ export const BookmarkModal: React.FC<BookmarkModalProps> = ({
       setTitle('');
       setDescription('');
       setIconUrl('');
-      setCategoryId(defaultCategoryId && defaultCategoryId !== 'all' && defaultCategoryId !== 'pinned' && defaultCategoryId !== 'popular' ? defaultCategoryId : (categories[0]?.id || ''));
+      setCategoryId(
+        defaultCategoryId &&
+          defaultCategoryId !== 'all' &&
+          defaultCategoryId !== 'pinned' &&
+          defaultCategoryId !== 'popular'
+          ? defaultCategoryId
+          : categories[0]?.id || ''
+      );
       setIsPinned(false);
       setIsPrivate(false);
       setSortOrder(0);
@@ -59,6 +68,8 @@ export const BookmarkModal: React.FC<BookmarkModalProps> = ({
   }, [initialData, defaultCategoryId, categories, isOpen]);
 
   if (!isOpen) return null;
+
+  const isLight = theme === 'light';
 
   const handleAutoScrape = async () => {
     if (!url.trim()) {
@@ -77,15 +88,12 @@ export const BookmarkModal: React.FC<BookmarkModalProps> = ({
 
     try {
       const meta = await scrapeUrlMeta(formattedUrl);
-      if (meta.title && !title) setTitle(meta.title);
-      else if (meta.title) setTitle(meta.title);
-
+      if (meta.title) setTitle(meta.title);
       if (meta.description) setDescription(meta.description);
       if (meta.icon_url) setIconUrl(meta.icon_url);
       setScrapeSuccess(true);
     } catch (err: any) {
       console.warn('Scrape failed:', err);
-      // Fallback domain
       try {
         const domain = new URL(formattedUrl).hostname;
         if (!title) setTitle(domain);
@@ -147,22 +155,29 @@ export const BookmarkModal: React.FC<BookmarkModalProps> = ({
     }
   };
 
+  const modalBg = isLight ? 'bg-white border-slate-200 text-slate-800' : 'bg-slate-900 border-slate-800 text-slate-100';
+  const headerBg = isLight ? 'bg-slate-50/80 border-slate-200' : 'bg-slate-900/80 border-slate-800';
+  const inputBg = isLight ? 'bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-amber-500' : 'bg-slate-800/80 border-slate-700 text-slate-100 placeholder:text-slate-500 focus:border-amber-400';
+  const labelColor = isLight ? 'text-slate-700' : 'text-slate-300';
+  const footerBg = isLight ? 'border-slate-200' : 'border-slate-800';
+  const cancelBtnClass = isLight ? 'bg-slate-100 hover:bg-slate-200 text-slate-700' : 'bg-slate-800 hover:bg-slate-700 text-slate-300';
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fadeIn">
-      <div className="w-full max-w-lg bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+      <div className={`w-full max-w-lg border rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] ${modalBg}`}>
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-900/80">
+        <div className={`flex items-center justify-between px-6 py-4 border-b ${headerBg}`}>
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 font-bold">
+            <div className="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500 font-bold">
               ⚡
             </div>
-            <h3 className="font-bold text-slate-100 text-base">
+            <h3 className="font-bold text-base">
               {initialData ? '编辑书签' : '添加新书签'}
             </h3>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded-lg transition"
+            className={`p-1.5 rounded-lg transition ${isLight ? 'text-slate-400 hover:text-slate-700 hover:bg-slate-100' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'}`}
           >
             <X size={18} />
           </button>
@@ -171,7 +186,7 @@ export const BookmarkModal: React.FC<BookmarkModalProps> = ({
         {/* Body Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto">
           {errorMsg && (
-            <div className="flex items-center gap-2 px-3.5 py-2.5 bg-red-500/10 border border-red-500/30 rounded-xl text-xs text-red-400">
+            <div className="flex items-center gap-2 px-3.5 py-2.5 bg-red-500/10 border border-red-500/30 rounded-xl text-xs text-red-500">
               <AlertCircle size={15} className="shrink-0" />
               <span>{errorMsg}</span>
             </div>
@@ -179,9 +194,9 @@ export const BookmarkModal: React.FC<BookmarkModalProps> = ({
 
           {/* URL Input with Scrape Button */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-300 flex items-center justify-between">
+            <label className={`text-xs font-semibold flex items-center justify-between ${labelColor}`}>
               <span>网址 (URL) *</span>
-              {scrapeSuccess && <span className="text-emerald-400 text-[11px] flex items-center gap-1"><Check size={12} /> 元数据已自动填充</span>}
+              {scrapeSuccess && <span className="text-emerald-500 text-[11px] flex items-center gap-1"><Check size={12} /> 元数据已自动填充</span>}
             </label>
             <div className="flex gap-2">
               <div className="relative flex-1">
@@ -191,14 +206,14 @@ export const BookmarkModal: React.FC<BookmarkModalProps> = ({
                   placeholder="https://example.com"
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
-                  className="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-amber-400 transition"
+                  className={`w-full rounded-xl px-3 py-2 text-xs border focus:outline-none transition ${inputBg}`}
                 />
               </div>
               <button
                 type="button"
                 onClick={handleAutoScrape}
                 disabled={isScraping || !url.trim()}
-                className="px-3 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 disabled:opacity-50 text-slate-950 font-bold text-xs rounded-xl shadow-md transition flex items-center gap-1.5 shrink-0"
+                className="px-3.5 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 disabled:opacity-50 text-slate-950 font-bold text-xs rounded-xl shadow-sm transition flex items-center gap-1.5 shrink-0"
                 title="自动抓取网页标题、图标与摘要"
               >
                 <Sparkles size={13} className={isScraping ? 'animate-spin' : ''} />
@@ -209,7 +224,7 @@ export const BookmarkModal: React.FC<BookmarkModalProps> = ({
 
           {/* Title */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-300">
+            <label className={`text-xs font-semibold ${labelColor}`}>
               书签标题 *
             </label>
             <input
@@ -218,22 +233,22 @@ export const BookmarkModal: React.FC<BookmarkModalProps> = ({
               placeholder="网站名称或工具标题"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-amber-400 transition"
+              className={`w-full rounded-xl px-3 py-2 text-xs border focus:outline-none transition ${inputBg}`}
             />
           </div>
 
           {/* Category Selector */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-300">
+            <label className={`text-xs font-semibold ${labelColor}`}>
               所属分类 *
             </label>
             <select
               value={categoryId}
               onChange={(e) => setCategoryId(e.target.value)}
-              className="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 outline-none focus:border-amber-400 transition cursor-pointer"
+              className={`w-full rounded-xl px-3 py-2 text-xs border outline-none transition cursor-pointer ${inputBg}`}
             >
               {categories.map((c) => (
-                <option key={c.id} value={c.id} className="bg-slate-900 text-slate-200">
+                <option key={c.id} value={c.id} className={isLight ? 'bg-white text-slate-900' : 'bg-slate-900 text-slate-100'}>
                   {c.name}
                 </option>
               ))}
@@ -242,7 +257,7 @@ export const BookmarkModal: React.FC<BookmarkModalProps> = ({
 
           {/* Description */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-300">
+            <label className={`text-xs font-semibold ${labelColor}`}>
               简介描述 / 备注
             </label>
             <textarea
@@ -250,21 +265,21 @@ export const BookmarkModal: React.FC<BookmarkModalProps> = ({
               placeholder="简要描述网站功能、用途或账号提示（选填）"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-amber-400 transition resize-none"
+              className={`w-full rounded-xl px-3 py-2 text-xs border focus:outline-none transition resize-none ${inputBg}`}
             />
           </div>
 
           {/* Icon URL preview */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-300">
+            <label className={`text-xs font-semibold ${labelColor}`}>
               Favicon 图标链接
             </label>
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center p-1 shrink-0">
+              <div className={`w-8 h-8 rounded-lg border flex items-center justify-center p-1 shrink-0 ${isLight ? 'bg-slate-100 border-slate-300' : 'bg-slate-800 border-slate-700'}`}>
                 {iconUrl ? (
                   <img src={iconUrl} alt="icon" className="w-full h-full object-contain" onError={() => setIconUrl('')} />
                 ) : (
-                  <Globe size={16} className="text-slate-500" />
+                  <Globe size={16} className="text-slate-400" />
                 )}
               </div>
               <input
@@ -272,55 +287,88 @@ export const BookmarkModal: React.FC<BookmarkModalProps> = ({
                 placeholder="https://.../favicon.ico (默认自动提取)"
                 value={iconUrl}
                 onChange={(e) => setIconUrl(e.target.value)}
-                className="flex-1 bg-slate-800/80 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-amber-400 transition"
+                className={`flex-1 rounded-xl px-3 py-2 text-xs border focus:outline-none transition ${inputBg}`}
               />
             </div>
           </div>
 
-          {/* Toggles: Pin to top & Private */}
-          <div className="flex items-center gap-6 pt-1">
-            <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={isPinned}
-                onChange={(e) => setIsPinned(e.target.checked)}
-                className="w-4 h-4 rounded text-amber-500 focus:ring-0 bg-slate-800 border-slate-700 cursor-pointer"
-              />
-              <span className="flex items-center gap-1 font-medium">
-                <Star size={13} className={isPinned ? 'text-amber-400 fill-amber-400' : 'text-slate-400'} />
+          {/* Custom Styled Toggles: Pin to top & Private (Replacing raw HTML checkbox) */}
+          <div className="grid grid-cols-2 gap-3 pt-2">
+            <button
+              type="button"
+              onClick={() => setIsPinned(!isPinned)}
+              className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl border text-xs font-semibold transition-all select-none ${
+                isPinned
+                  ? isLight
+                    ? 'bg-amber-500/15 border-amber-500 text-amber-800 shadow-xs'
+                    : 'bg-amber-500/15 border-amber-400 text-amber-300 shadow-xs'
+                  : isLight
+                    ? 'bg-slate-100 border-slate-200 text-slate-600 hover:border-slate-300'
+                    : 'bg-slate-800/40 border-slate-700 text-slate-400 hover:text-slate-300 hover:border-slate-600'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <Star size={14} className={isPinned ? 'text-amber-500 fill-amber-500' : 'text-slate-400'} />
                 <span>置顶推荐</span>
-              </span>
-            </label>
+              </div>
+              <div className={`w-4 h-4 rounded-md flex items-center justify-center border transition ${
+                isPinned
+                  ? 'bg-amber-500 border-amber-500 text-slate-950 font-bold'
+                  : isLight ? 'border-slate-300 bg-white' : 'border-slate-600 bg-slate-800'
+              }`}>
+                {isPinned && <Check size={11} className="stroke-[3]" />}
+              </div>
+            </button>
 
-            <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={isPrivate}
-                onChange={(e) => setIsPrivate(e.target.checked)}
-                className="w-4 h-4 rounded text-amber-500 focus:ring-0 bg-slate-800 border-slate-700 cursor-pointer"
-              />
-              <span className="flex items-center gap-1 font-medium">
-                <Shield size={13} className={isPrivate ? 'text-sky-400' : 'text-slate-400'} />
+            <button
+              type="button"
+              onClick={() => setIsPrivate(!isPrivate)}
+              className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl border text-xs font-semibold transition-all select-none ${
+                isPrivate
+                  ? isLight
+                    ? 'bg-sky-500/15 border-sky-500 text-sky-800 shadow-xs'
+                    : 'bg-sky-500/15 border-sky-400 text-sky-300 shadow-xs'
+                  : isLight
+                    ? 'bg-slate-100 border-slate-200 text-slate-600 hover:border-slate-300'
+                    : 'bg-slate-800/40 border-slate-700 text-slate-400 hover:text-slate-300 hover:border-slate-600'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <Shield size={14} className={isPrivate ? 'text-sky-500' : 'text-slate-400'} />
                 <span>私有书签</span>
-              </span>
-            </label>
+              </div>
+              <div className={`w-4 h-4 rounded-md flex items-center justify-center border transition ${
+                isPrivate
+                  ? 'bg-sky-500 border-sky-500 text-slate-950 font-bold'
+                  : isLight ? 'border-slate-300 bg-white' : 'border-slate-600 bg-slate-800'
+              }`}>
+                {isPrivate && <Check size={11} className="stroke-[3]" />}
+              </div>
+            </button>
           </div>
 
           {/* Buttons */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
+          <div className={`flex items-center justify-end gap-3 pt-4 border-t ${footerBg}`}>
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl transition"
+              className={`px-4 py-2 text-xs font-semibold rounded-xl transition ${cancelBtnClass}`}
             >
               取消
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold rounded-xl shadow-md shadow-amber-500/20 transition disabled:opacity-50"
+              className="px-5 py-2 bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-slate-950 text-xs font-bold rounded-xl shadow-md transition flex items-center gap-1.5"
             >
-              {isSubmitting ? '保存中...' : initialData ? '更新书签' : '创建书签'}
+              {isSubmitting ? (
+                <span>保存中...</span>
+              ) : (
+                <>
+                  <Check size={14} className="stroke-[2.5]" />
+                  <span>{initialData ? '更新书签' : '立即收录'}</span>
+                </>
+              )}
             </button>
           </div>
         </form>

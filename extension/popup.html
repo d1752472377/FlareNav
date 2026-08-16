@@ -31,7 +31,7 @@
       <div class="form-group">
         <label for="url">网页链接 (URL)</label>
         <div class="input-with-icon">
-          <img id="faviconPreview" class="favicon-preview" src="icon.png" alt="icon" />
+          <img id="faviconPreview" class="favicon-preview" src="icons/icon-32.png" alt="icon" />
           <input type="url" id="url" required placeholder="https://example.com" />
         </div>
       </div>
@@ -55,15 +55,23 @@
         <textarea id="description" rows="2" placeholder="可在此输入页面摘要或个人备注（选填）"></textarea>
       </div>
 
-      <div class="form-row">
-        <label class="checkbox-label">
-          <input type="checkbox" id="isPinned" />
-          <span>置顶推荐</span>
-        </label>
-        <label class="checkbox-label">
-          <input type="checkbox" id="isPrivate" />
-          <span>私有书签</span>
-        </label>
+      <!-- Custom Toggle Chips (Replaces raw checkboxes) -->
+      <div class="custom-toggle-row">
+        <button type="button" id="isPinnedToggle" class="custom-toggle-btn" data-checked="false">
+          <div class="toggle-left">
+            <span class="toggle-icon">⭐</span>
+            <span>置顶推荐</span>
+          </div>
+          <div class="toggle-box"></div>
+        </button>
+
+        <button type="button" id="isPrivateToggle" class="custom-toggle-btn" data-checked="false">
+          <div class="toggle-left">
+            <span class="toggle-icon">🛡️</span>
+            <span>私有书签</span>
+          </div>
+          <div class="toggle-box"></div>
+        </button>
       </div>
 
       <div class="actions">

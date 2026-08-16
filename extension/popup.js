@@ -7,8 +7,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const titleInput = document.getElementById('title');
   const descInput = document.getElementById('description');
   const categorySelect = document.getElementById('category');
-  const isPinnedCheck = document.getElementById('isPinned');
-  const isPrivateCheck = document.getElementById('isPrivate');
+  const isPinnedToggle = document.getElementById('isPinnedToggle');
+  const isPrivateToggle = document.getElementById('isPrivateToggle');
   const faviconPreview = document.getElementById('faviconPreview');
   const bookmarkForm = document.getElementById('bookmarkForm');
   const submitBtn = document.getElementById('submitBtn');
@@ -23,6 +23,30 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   let currentIconUrl = '';
   let config = { apiUrl: '', secretToken: '' };
+
+  let isPinned = false;
+  let isPrivate = false;
+
+  // Toggle handlers
+  isPinnedToggle?.addEventListener('click', () => {
+    isPinned = !isPinned;
+    isPinnedToggle.dataset.checked = String(isPinned);
+    if (isPinned) {
+      isPinnedToggle.classList.add('active-pinned');
+    } else {
+      isPinnedToggle.classList.remove('active-pinned');
+    }
+  });
+
+  isPrivateToggle?.addEventListener('click', () => {
+    isPrivate = !isPrivate;
+    isPrivateToggle.dataset.checked = String(isPrivate);
+    if (isPrivate) {
+      isPrivateToggle.classList.add('active-private');
+    } else {
+      isPrivateToggle.classList.remove('active-private');
+    }
+  });
 
   openOptionsBtn?.addEventListener('click', () => {
     if (chrome.runtime.openOptionsPage) {
@@ -60,7 +84,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         const pageUrl = tab.url || '';
         const pageTitle = tab.title || '';
 
-        // Ignore internal browser tabs
         if (!pageUrl.startsWith('chrome://') && !pageUrl.startsWith('edge://') && !pageUrl.startsWith('about:')) {
           urlInput.value = pageUrl;
           titleInput.value = pageTitle;
@@ -70,14 +93,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             currentIconUrl = tab.favIconUrl || `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
             faviconPreview.src = currentIconUrl;
           } catch (e) {
-            currentIconUrl = 'icon.png';
+            currentIconUrl = 'icons/icon-32.png';
           }
         }
       }
     });
   }
 
-  // 3. Fallback categories if offline/not configured
+  // 3. Fallback categories
   function loadFallbackCategories() {
     categorySelect.innerHTML = `
       <option value="cat_ai">AI 工具 & 智能体</option>
@@ -130,8 +153,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         category_id: categorySelect.value,
         description: descInput.value.trim(),
         icon_url: currentIconUrl,
-        is_pinned: isPinnedCheck.checked ? 1 : 0,
-        is_private: isPrivateCheck.checked ? 1 : 0
+        is_pinned: isPinned ? 1 : 0,
+        is_private: isPrivate ? 1 : 0
       };
 
       const resp = await fetch(`${config.apiUrl}/api/bookmarks`, {
@@ -151,7 +174,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           window.close();
         }, 1200);
       } else {
-        showResult(`收藏失败: ${res.error || '未授权或服务器错误'}`, 'error');
+        showResult(`收藏失败: ${res.error || '未授权或密钥错误'}`, 'error');
       }
     } catch (err) {
       showResult(`网络错误: ${err.message}`, 'error');
@@ -181,7 +204,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           }
           quickSearchResults.innerHTML = data.data.slice(0, 5).map(item => `
             <a href="${item.url}" target="_blank" class="quick-result-item" title="${item.url}">
-              <img src="${item.icon_url || 'icon.png'}" onerror="this.src='icon.png'" />
+              <img src="${item.icon_url || 'icons/icon-32.png'}" onerror="this.src='icons/icon-32.png'" />
               <span class="item-title">${item.title}</span>
             </a>
           `).join('');

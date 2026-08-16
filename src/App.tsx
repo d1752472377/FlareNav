@@ -271,7 +271,7 @@ export default function App() {
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition shrink-0 ${
               activeCategoryId === 'all'
                 ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
-                : 'bg-slate-900/80 text-slate-300 border border-slate-800'
+                : theme === 'light' ? 'bg-white text-slate-700 border border-slate-200' : 'bg-slate-900/80 text-slate-300 border border-slate-800'
             }`}
           >
             <Layers size={13} />
@@ -284,7 +284,7 @@ export default function App() {
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition shrink-0 ${
               activeCategoryId === 'pinned'
                 ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
-                : 'bg-slate-900/80 text-slate-300 border border-slate-800'
+                : theme === 'light' ? 'bg-white text-slate-700 border border-slate-200' : 'bg-slate-900/80 text-slate-300 border border-slate-800'
             }`}
           >
             <Star size={13} className="text-yellow-400" />
@@ -297,7 +297,7 @@ export default function App() {
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition shrink-0 ${
               activeCategoryId === 'popular'
                 ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
-                : 'bg-slate-900/80 text-slate-300 border border-slate-800'
+                : theme === 'light' ? 'bg-white text-slate-700 border border-slate-200' : 'bg-slate-900/80 text-slate-300 border border-slate-800'
             }`}
           >
             <Flame size={13} className="text-orange-400" />
@@ -311,7 +311,7 @@ export default function App() {
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition shrink-0 ${
                 activeCategoryId === cat.id
                   ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
-                  : 'bg-slate-900/80 text-slate-300 border border-slate-800'
+                  : theme === 'light' ? 'bg-white text-slate-700 border border-slate-200' : 'bg-slate-900/80 text-slate-300 border border-slate-800'
               }`}
             >
               <DynamicIcon name={cat.icon} size={13} />
@@ -366,14 +366,16 @@ export default function App() {
       </main>
 
       {/* Footer */}
-      <footer className="w-full border-t border-slate-800/80 bg-slate-950/60 backdrop-blur py-5 mt-10">
-        <div className="w-full max-w-7xl 2xl:max-w-[1700px] 3xl:max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+      <footer className={`w-full border-t py-5 mt-10 transition-colors ${
+        theme === 'light' ? 'border-slate-200 bg-white/80 text-slate-500' : 'border-slate-800/80 bg-slate-950/60 text-slate-500'
+      } backdrop-blur`}>
+        <div className="w-full max-w-7xl 2xl:max-w-[1700px] 3xl:max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-slate-300">FlareNav</span>
+            <span className={`font-bold ${theme === 'light' ? 'text-slate-800' : 'text-slate-300'}`}>FlareNav</span>
             <span>•</span>
             <span>自托管 Cloudflare Pages + D1 (SQLite) 架构</span>
             {zeroTrustEmail && (
-              <span className="hidden md:inline-flex items-center gap-1 text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+              <span className="hidden md:inline-flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
                 <ShieldCheck size={11} />
                 <span>Zero Trust: {zeroTrustEmail}</span>
               </span>
@@ -383,28 +385,28 @@ export default function App() {
           <div className="flex items-center gap-4">
             <button
               onClick={() => setExtensionGuideOpen(true)}
-              className="hover:text-amber-400 flex items-center gap-1 transition"
+              className="hover:text-amber-500 flex items-center gap-1 transition"
             >
               <Chrome size={13} />
               <span>Chrome 插件</span>
             </button>
             <button
               onClick={() => setZeroTrustGuideOpen(true)}
-              className="hover:text-emerald-400 flex items-center gap-1 transition"
+              className="hover:text-emerald-500 flex items-center gap-1 transition"
             >
               <ShieldCheck size={13} />
               <span>零信任 (Access)</span>
             </button>
             <button
               onClick={() => setDeployGuideOpen(true)}
-              className="hover:text-sky-400 flex items-center gap-1 transition"
+              className="hover:text-sky-500 flex items-center gap-1 transition"
             >
               <Cloud size={13} />
               <span>D1 部署指南</span>
             </button>
             <button
               onClick={() => setImportExportOpen(true)}
-              className="hover:text-slate-300 transition"
+              className="hover:text-amber-500 transition"
             >
               备份与导入
             </button>
@@ -423,6 +425,7 @@ export default function App() {
         categories={categories}
         initialData={editingBookmark}
         defaultCategoryId={activeCategoryId}
+        theme={theme}
       />
 
       <CategoryModal
@@ -433,6 +436,7 @@ export default function App() {
         }}
         onSave={handleSaveCategory}
         initialData={editingCategory}
+        theme={theme}
       />
 
       <AdminAuthModal
@@ -442,26 +446,31 @@ export default function App() {
           setIsAdmin(true);
           showToast('🎉 管理员身份验证通过！已解锁编辑权限');
         }}
+        theme={theme}
       />
 
       <ExtensionGuideModal
         isOpen={extensionGuideOpen}
         onClose={() => setExtensionGuideOpen(false)}
+        theme={theme}
       />
 
       <DeployGuideModal
         isOpen={deployGuideOpen}
         onClose={() => setDeployGuideOpen(false)}
+        theme={theme}
       />
 
       <ZeroTrustGuideModal
         isOpen={zeroTrustGuideOpen}
         onClose={() => setZeroTrustGuideOpen(false)}
+        theme={theme}
       />
 
       <StatsModal
         isOpen={statsOpen}
         onClose={() => setStatsOpen(false)}
+        theme={theme}
       />
 
       <ImportExportModal
@@ -473,6 +482,7 @@ export default function App() {
           loadData();
           showToast('🎉 书签导入成功！');
         }}
+        theme={theme}
       />
     </div>
   );

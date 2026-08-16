@@ -58,7 +58,7 @@ body {
 .settings-btn {
   text-decoration: none;
   font-size: 16px;
-  padding: 4px;
+  padding: 4px 6px;
   border-radius: 6px;
   transition: background 0.2s;
   cursor: pointer;
@@ -71,12 +71,13 @@ body {
 .alert-box {
   background: #451a03;
   border: 1px solid #b45309;
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 10px;
   display: flex;
   flex-direction: column;
   gap: 6px;
   color: #fde68a;
+  font-size: 12px;
 }
 
 .form {
@@ -93,7 +94,7 @@ body {
 
 .form-group label {
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 600;
   color: #94a3b8;
 }
 
@@ -104,18 +105,19 @@ select {
   width: 100%;
   background: #1e293b;
   border: 1px solid #334155;
-  border-radius: 6px;
-  padding: 7px 9px;
+  border-radius: 8px;
+  padding: 8px 10px;
   color: #f8fafc;
   font-size: 12px;
   outline: none;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, background 0.2s;
 }
 
 input:focus,
 textarea:focus,
 select:focus {
-  border-color: #38bdf8;
+  border-color: #f59e0b;
+  background: #1e293b;
 }
 
 .input-with-icon {
@@ -125,53 +127,125 @@ select:focus {
 }
 
 .input-with-icon input {
-  padding-left: 28px;
+  padding-left: 30px;
 }
 
 .favicon-preview {
   position: absolute;
-  left: 7px;
-  width: 15px;
-  height: 15px;
-  border-radius: 3px;
+  left: 8px;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  object-fit: contain;
 }
 
-.form-row {
+/* Custom Modern Toggle Chips */
+.custom-toggle-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.custom-toggle-btn {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 2px 0;
+  padding: 8px 10px;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
 }
 
-.checkbox-label {
+.custom-toggle-btn:hover {
+  border-color: #475569;
+  color: #cbd5e1;
+}
+
+.toggle-left {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
+}
+
+.toggle-icon {
   font-size: 12px;
-  color: #cbd5e1;
-  cursor: pointer;
+}
+
+.toggle-box {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  border: 1.5px solid #475569;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0f172a;
+  transition: all 0.15s ease;
+}
+
+.custom-toggle-btn.active-pinned {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: #f59e0b;
+  color: #fbbf24;
+}
+
+.custom-toggle-btn.active-pinned .toggle-box {
+  background: #f59e0b;
+  border-color: #f59e0b;
+}
+
+.custom-toggle-btn.active-pinned .toggle-box::after {
+  content: "✓";
+  color: #0f172a;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.custom-toggle-btn.active-private {
+  background: rgba(56, 189, 248, 0.12);
+  border-color: #38bdf8;
+  color: #38bdf8;
+}
+
+.custom-toggle-btn.active-private .toggle-box {
+  background: #38bdf8;
+  border-color: #38bdf8;
+}
+
+.custom-toggle-btn.active-private .toggle-box::after {
+  content: "✓";
+  color: #0f172a;
+  font-size: 10px;
+  font-weight: 900;
 }
 
 .btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 6px;
+  border-radius: 8px;
   border: none;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: opacity 0.2s, background 0.2s;
-  padding: 8px 12px;
+  padding: 9px 12px;
 }
 
 .btn-primary {
-  background: #2563eb;
-  color: #ffffff;
+  background: #f59e0b;
+  color: #0f172a;
   width: 100%;
 }
 
 .btn-primary:hover {
-  background: #1d4ed8;
+  background: #d97706;
 }
 
 .btn-secondary {
@@ -184,13 +258,13 @@ select:focus {
 }
 
 .btn-sm {
-  padding: 4px 8px;
+  padding: 5px 8px;
   font-size: 11px;
 }
 
 .result-msg {
   padding: 8px;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 12px;
   text-align: center;
 }
@@ -233,8 +307,8 @@ select:focus {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 5px 8px;
-  border-radius: 5px;
+  padding: 6px 8px;
+  border-radius: 6px;
   background: #1e293b;
   color: #e2e8f0;
   text-decoration: none;
@@ -244,13 +318,14 @@ select:focus {
 
 .quick-result-item:hover {
   background: #334155;
-  color: #38bdf8;
+  color: #f59e0b;
 }
 
 .quick-result-item img {
   width: 14px;
   height: 14px;
-  border-radius: 2px;
+  border-radius: 3px;
+  object-fit: contain;
 }
 
 .quick-result-item .item-title {
@@ -267,7 +342,7 @@ select:focus {
 .spinner {
   width: 14px;
   height: 14px;
-  border: 2px solid #ffffff;
+  border: 2px solid #0f172a;
   border-top-color: transparent;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;

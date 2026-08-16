@@ -73,6 +73,8 @@ export const Header: React.FC<HeaderProps> = ({
   const toolsMenuRef = useRef<HTMLDivElement>(null);
   const engineMenuRef = useRef<HTMLDivElement>(null);
 
+  const isLight = theme === 'light';
+
   // Global hotkey '/' or 'Ctrl+K' / 'Cmd+K' to focus search
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -114,8 +116,44 @@ export const Header: React.FC<HeaderProps> = ({
     onThemeChange(themes[nextIdx]);
   };
 
+  const headerBgClass = isLight
+    ? 'bg-white/80 border-slate-200 shadow-xs'
+    : 'bg-slate-950/80 border-slate-800/80';
+
+  const engineBtnClass = isLight
+    ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
+    : 'bg-slate-800/90 hover:bg-slate-700/90 text-slate-200 border-slate-700';
+
+  const searchInputClass = isLight
+    ? isSearchFocused
+      ? 'bg-white border-amber-500 text-slate-900 placeholder:text-slate-400'
+      : 'bg-slate-100/90 border-slate-200 text-slate-900 placeholder:text-slate-400 hover:bg-slate-100'
+    : isSearchFocused
+      ? 'bg-slate-800 border-amber-500/50 text-slate-100 placeholder:text-slate-500'
+      : 'bg-slate-800/60 border-slate-700 text-slate-100 placeholder:text-slate-500 hover:bg-slate-800/80';
+
+  const dropdownMenuBg = isLight
+    ? 'bg-white border-slate-200 text-slate-800 shadow-2xl divide-slate-100'
+    : 'bg-slate-900/95 border-slate-700/80 text-slate-200 shadow-2xl divide-slate-800/80';
+
+  const extensionBtnClass = isLight
+    ? 'text-amber-800 bg-amber-50 hover:bg-amber-100 border-amber-300'
+    : 'text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/30';
+
+  const toolsBtnClass = isLight
+    ? toolsMenuOpen
+      ? 'bg-slate-100 text-amber-600 border-amber-400'
+      : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
+    : toolsMenuOpen
+      ? 'bg-slate-800 text-amber-400 border-amber-500/30'
+      : 'bg-slate-900/60 hover:bg-slate-800 text-slate-300 border-slate-800';
+
+  const authBtnClass = isLight
+    ? 'text-slate-700 hover:bg-slate-100 border-slate-200 bg-white'
+    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/80 border-slate-800 bg-transparent';
+
   return (
-    <header className="w-full sticky top-0 z-40 backdrop-blur-xl bg-slate-950/80 border-b border-slate-800/80 transition-colors duration-200">
+    <header className={`w-full sticky top-0 z-40 backdrop-blur-xl border-b transition-colors duration-200 ${headerBgClass}`}>
       <div className="w-full max-w-7xl 2xl:max-w-[1700px] 3xl:max-w-[1920px] mx-auto px-3 sm:px-6 lg:px-8 py-2.5">
         <div className="flex items-center justify-between gap-2 sm:gap-4 lg:gap-6">
           
@@ -131,14 +169,14 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
             <div className="hidden xs:block">
               <div className="flex items-center gap-1.5">
-                <span className="font-extrabold text-base sm:text-lg text-slate-100 tracking-tight">
-                  Flare<span className="text-amber-400">Nav</span>
+                <span className={`font-extrabold text-base sm:text-lg tracking-tight ${isLight ? 'text-slate-900' : 'text-slate-100'}`}>
+                  Flare<span className="text-amber-500">Nav</span>
                 </span>
-                <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20">
                   D1
                 </span>
               </div>
-              <p className="text-[10px] sm:text-[11px] text-slate-400 leading-none">Cloudflare SQLite 个人导航</p>
+              <p className={`text-[10px] sm:text-[11px] leading-none ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>Cloudflare SQLite 个人导航</p>
             </div>
           </div>
 
@@ -150,17 +188,17 @@ export const Header: React.FC<HeaderProps> = ({
                 <button
                   type="button"
                   onClick={() => setEngineMenuOpen(!engineMenuOpen)}
-                  className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-2 text-xs font-semibold text-slate-200 bg-slate-800/90 hover:bg-slate-700/90 rounded-l-xl border-y border-l border-slate-700 transition"
+                  className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-2 text-xs font-semibold rounded-l-xl border-y border-l transition ${engineBtnClass}`}
                   title="切换搜索引擎"
                 >
                   <span className="text-sm">{selectedEngine.icon}</span>
                   <span className="hidden md:inline">{selectedEngine.name}</span>
-                  <ChevronDown size={12} className="text-slate-400" />
+                  <ChevronDown size={12} className={isLight ? 'text-slate-500' : 'text-slate-400'} />
                 </button>
 
                 {engineMenuOpen && (
-                  <div className="absolute left-0 top-full mt-1.5 w-44 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl z-50 py-1 overflow-hidden backdrop-blur-md animate-in fade-in zoom-in-95 duration-150">
-                    <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-800">
+                  <div className={`absolute left-0 top-full mt-1.5 w-44 rounded-xl shadow-2xl z-50 py-1 overflow-hidden backdrop-blur-md animate-in fade-in zoom-in-95 duration-150 border ${isLight ? 'bg-white border-slate-200' : 'bg-slate-900 border-slate-700'}`}>
+                    <div className={`px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider border-b ${isLight ? 'text-slate-500 border-slate-100' : 'text-slate-400 border-slate-800'}`}>
                       切换搜索引擎
                     </div>
                     {SEARCH_ENGINES.map((engine) => (
@@ -174,8 +212,8 @@ export const Header: React.FC<HeaderProps> = ({
                         }}
                         className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs text-left transition ${
                           selectedEngine.id === engine.id
-                            ? 'bg-amber-500/15 text-amber-300 font-medium'
-                            : 'text-slate-300 hover:bg-slate-800 hover:text-slate-100'
+                            ? isLight ? 'bg-amber-50 text-amber-700 font-semibold' : 'bg-amber-500/15 text-amber-300 font-medium'
+                            : isLight ? 'text-slate-700 hover:bg-slate-50' : 'text-slate-300 hover:bg-slate-800 hover:text-slate-100'
                         }`}
                       >
                         <span className="text-base">{engine.icon}</span>
@@ -196,9 +234,7 @@ export const Header: React.FC<HeaderProps> = ({
                   onBlur={() => setIsSearchFocused(false)}
                   onChange={(e) => onSearchChange(e.target.value)}
                   placeholder={selectedEngine.placeholder}
-                  className={`w-full bg-slate-800/60 border-y border-slate-700 px-3 py-2 text-xs sm:text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none transition ${
-                    isSearchFocused ? 'bg-slate-800 border-amber-500/50' : 'hover:bg-slate-800/80'
-                  }`}
+                  className={`w-full border-y px-3 py-2 text-xs sm:text-sm focus:outline-none transition ${searchInputClass}`}
                 />
                 
                 {/* Keyboard hotkey hint or clear button */}
@@ -210,12 +246,12 @@ export const Header: React.FC<HeaderProps> = ({
                         onSearchChange('');
                         inputRef.current?.focus();
                       }}
-                      className="text-slate-400 hover:text-slate-200 p-0.5"
+                      className={`${isLight ? 'text-slate-400 hover:text-slate-700' : 'text-slate-400 hover:text-slate-200'} p-0.5`}
                     >
                       <X size={14} />
                     </button>
                   ) : (
-                    <kbd className="hidden lg:inline-block px-1.5 py-0.5 text-[10px] font-mono text-slate-400 bg-slate-900 border border-slate-700 rounded shadow-sm">
+                    <kbd className={`hidden lg:inline-block px-1.5 py-0.5 text-[10px] font-mono rounded shadow-xs ${isLight ? 'text-slate-500 bg-slate-200 border border-slate-300' : 'text-slate-400 bg-slate-900 border border-slate-700'}`}>
                       /
                     </kbd>
                   )}
@@ -238,14 +274,14 @@ export const Header: React.FC<HeaderProps> = ({
             {/* Chrome Extension Button (Primary) */}
             <button
               onClick={onOpenExtensionGuide}
-              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded-xl transition"
+              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold rounded-xl border transition ${extensionBtnClass}`}
               title="浏览器快捷收藏扩展"
             >
               <Chrome size={14} />
               <span className="hidden sm:inline">插件</span>
             </button>
 
-            {/* Add Bookmark Button (Visible when admin or on large screens) */}
+            {/* Add Bookmark Button (Visible when admin) */}
             {isAdmin && (
               <button
                 onClick={onOpenAddBookmark}
@@ -261,22 +297,18 @@ export const Header: React.FC<HeaderProps> = ({
             <div className="relative" ref={toolsMenuRef}>
               <button
                 onClick={() => setToolsMenuOpen(!toolsMenuOpen)}
-                className={`p-2 rounded-xl border text-xs font-medium transition flex items-center gap-1 ${
-                  toolsMenuOpen
-                    ? 'bg-slate-800 text-amber-400 border-amber-500/30'
-                    : 'bg-slate-900/60 hover:bg-slate-800 text-slate-300 border-slate-800'
-                }`}
+                className={`p-2 rounded-xl border text-xs font-medium transition flex items-center gap-1 ${toolsBtnClass}`}
                 title="更多工具与系统设置"
               >
                 <Settings size={15} />
-                <ChevronDown size={11} className="hidden sm:inline text-slate-400" />
+                <ChevronDown size={11} className={`hidden sm:inline ${isLight ? 'text-slate-500' : 'text-slate-400'}`} />
               </button>
 
               {toolsMenuOpen && (
-                <div className="absolute right-0 top-full mt-2 w-64 bg-slate-900/95 border border-slate-700/80 rounded-2xl shadow-2xl z-50 p-2 backdrop-blur-xl animate-in fade-in zoom-in-95 duration-150 divide-y divide-slate-800/80">
+                <div className={`absolute right-0 top-full mt-2 w-64 rounded-2xl shadow-2xl z-50 p-2 backdrop-blur-xl animate-in fade-in zoom-in-95 duration-150 border ${dropdownMenuBg}`}>
                   {/* Tools list */}
                   <div className="space-y-0.5 pb-2">
-                    <div className="px-2.5 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    <div className={`px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${isLight ? 'text-slate-400' : 'text-slate-400'}`}>
                       部署与安全
                     </div>
                     
@@ -285,12 +317,12 @@ export const Header: React.FC<HeaderProps> = ({
                         setToolsMenuOpen(false);
                         onOpenDeployGuide();
                       }}
-                      className="w-full flex items-center gap-2.5 px-2.5 py-2 text-xs text-left text-slate-200 hover:bg-slate-800/80 hover:text-sky-300 rounded-xl transition"
+                      className={`w-full flex items-center gap-2.5 px-2.5 py-2 text-xs text-left rounded-xl transition ${isLight ? 'text-slate-700 hover:bg-slate-50 hover:text-sky-600' : 'text-slate-200 hover:bg-slate-800/80 hover:text-sky-300'}`}
                     >
-                      <Cloud size={15} className="text-sky-400" />
+                      <Cloud size={15} className="text-sky-500" />
                       <div>
                         <div className="font-semibold">Cloudflare 部署指南</div>
-                        <div className="text-[10px] text-slate-400">Pages + D1 (SQLite) 架构</div>
+                        <div className={`text-[10px] ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>Pages + D1 (SQLite) 架构</div>
                       </div>
                     </button>
 
@@ -299,12 +331,12 @@ export const Header: React.FC<HeaderProps> = ({
                         setToolsMenuOpen(false);
                         onOpenZeroTrustGuide();
                       }}
-                      className="w-full flex items-center gap-2.5 px-2.5 py-2 text-xs text-left text-slate-200 hover:bg-slate-800/80 hover:text-emerald-300 rounded-xl transition"
+                      className={`w-full flex items-center gap-2.5 px-2.5 py-2 text-xs text-left rounded-xl transition ${isLight ? 'text-slate-700 hover:bg-slate-50 hover:text-emerald-600' : 'text-slate-200 hover:bg-slate-800/80 hover:text-emerald-300'}`}
                     >
-                      <ShieldCheck size={15} className="text-emerald-400" />
+                      <ShieldCheck size={15} className="text-emerald-500" />
                       <div>
                         <div className="font-semibold">Cloudflare 零信任 (Access)</div>
-                        <div className="text-[10px] text-slate-400">免密 OTP 邮箱验证与防护</div>
+                        <div className={`text-[10px] ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>免密 OTP 邮箱验证与防护</div>
                       </div>
                     </button>
 
@@ -312,19 +344,19 @@ export const Header: React.FC<HeaderProps> = ({
                       href="/api/download-project-zip"
                       download="flarenav-source-code.zip"
                       onClick={() => setToolsMenuOpen(false)}
-                      className="w-full flex items-center gap-2.5 px-2.5 py-2 text-xs text-left text-slate-200 hover:bg-slate-800/80 hover:text-amber-300 rounded-xl transition text-decoration-none"
+                      className={`w-full flex items-center gap-2.5 px-2.5 py-2 text-xs text-left rounded-xl transition text-decoration-none ${isLight ? 'text-slate-700 hover:bg-slate-50 hover:text-amber-600' : 'text-slate-200 hover:bg-slate-800/80 hover:text-amber-300'}`}
                     >
-                      <Download size={15} className="text-amber-400" />
+                      <Download size={15} className="text-amber-500" />
                       <div>
                         <div className="font-semibold">下载完整项目源码 (.zip)</div>
-                        <div className="text-[10px] text-slate-400">包含前端、API与插件源文件</div>
+                        <div className={`text-[10px] ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>包含前端、API与插件源文件</div>
                       </div>
                     </a>
                   </div>
 
                   {/* Data & Analytics */}
                   <div className="space-y-0.5 py-2">
-                    <div className="px-2.5 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    <div className={`px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${isLight ? 'text-slate-400' : 'text-slate-400'}`}>
                       数据与分析
                     </div>
 
@@ -333,9 +365,9 @@ export const Header: React.FC<HeaderProps> = ({
                         setToolsMenuOpen(false);
                         onOpenStats();
                       }}
-                      className="w-full flex items-center gap-2.5 px-2.5 py-2 text-xs text-left text-slate-200 hover:bg-slate-800/80 hover:text-purple-300 rounded-xl transition"
+                      className={`w-full flex items-center gap-2.5 px-2.5 py-2 text-xs text-left rounded-xl transition ${isLight ? 'text-slate-700 hover:bg-slate-50 hover:text-purple-600' : 'text-slate-200 hover:bg-slate-800/80 hover:text-purple-300'}`}
                     >
-                      <BarChart2 size={15} className="text-purple-400" />
+                      <BarChart2 size={15} className="text-purple-500" />
                       <span>访问统计与热度看板</span>
                     </button>
 
@@ -344,9 +376,9 @@ export const Header: React.FC<HeaderProps> = ({
                         setToolsMenuOpen(false);
                         onOpenImportExport();
                       }}
-                      className="w-full flex items-center gap-2.5 px-2.5 py-2 text-xs text-left text-slate-200 hover:bg-slate-800/80 hover:text-amber-300 rounded-xl transition"
+                      className={`w-full flex items-center gap-2.5 px-2.5 py-2 text-xs text-left rounded-xl transition ${isLight ? 'text-slate-700 hover:bg-slate-50 hover:text-amber-600' : 'text-slate-200 hover:bg-slate-800/80 hover:text-amber-300'}`}
                     >
-                      <FolderSync size={15} className="text-amber-400" />
+                      <FolderSync size={15} className="text-amber-500" />
                       <span>书签备份与导入 (JSON/HTML)</span>
                     </button>
                   </div>
@@ -357,13 +389,13 @@ export const Header: React.FC<HeaderProps> = ({
                       onClick={() => {
                         cycleTheme();
                       }}
-                      className="w-full flex items-center justify-between px-2.5 py-2 text-xs text-left text-slate-200 hover:bg-slate-800/80 rounded-xl transition"
+                      className={`w-full flex items-center justify-between px-2.5 py-2 text-xs text-left rounded-xl transition ${isLight ? 'text-slate-700 hover:bg-slate-50' : 'text-slate-200 hover:bg-slate-800/80'}`}
                     >
                       <div className="flex items-center gap-2.5">
-                        {theme === 'light' ? <Sun size={15} className="text-amber-400" /> : theme === 'cyber' ? <Terminal size={15} className="text-cyan-400" /> : <Moon size={15} className="text-indigo-400" />}
+                        {theme === 'light' ? <Sun size={15} className="text-amber-500" /> : theme === 'cyber' ? <Terminal size={15} className="text-cyan-400" /> : <Moon size={15} className="text-indigo-400" />}
                         <span>切换主题模式</span>
                       </div>
-                      <span className="text-[11px] font-mono text-slate-400 uppercase">{theme}</span>
+                      <span className={`text-[11px] font-mono uppercase ${isLight ? 'text-slate-500 font-semibold' : 'text-slate-400'}`}>{theme}</span>
                     </button>
                   </div>
                 </div>
@@ -374,16 +406,16 @@ export const Header: React.FC<HeaderProps> = ({
             {isAdmin ? (
               <button
                 onClick={onLogoutAdmin}
-                className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 rounded-xl transition"
+                className="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 rounded-xl transition"
                 title={zeroTrustEmail ? `Zero Trust 已认证: ${zeroTrustEmail}` : '已解锁管理模式，点击退出'}
               >
-                <ShieldCheck size={14} className="text-emerald-400" />
+                <ShieldCheck size={14} className="text-emerald-500" />
                 <span className="hidden sm:inline">{zeroTrustEmail ? 'ZT 免密' : '管理中'}</span>
               </button>
             ) : (
               <button
                 onClick={onOpenAdminAuth}
-                className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800/80 border border-slate-800 rounded-xl transition"
+                className={`flex items-center gap-1 px-2.5 sm:px-3 py-1.5 text-xs font-medium rounded-xl border transition ${authBtnClass}`}
                 title="管理员身份验证"
               >
                 <Shield size={14} />
