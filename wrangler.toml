@@ -1,0 +1,16 @@
+name = "flarenav"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = "dist"
+
+# Cloudflare D1 Database Binding
+# Execute: wrangler d1 create flarenav_db
+# Then replace database_id below with your D1 UUID
+[[d1_databases]]
+binding = "DB"
+database_name = "flarenav_db"
+database_id = "YOUR_CLOUDFLARE_D1_DATABASE_ID"
+
+[vars]
+ADMIN_SECRET_KEY = "flarenav-secret-admin-key"
+SITE_NAME = "FlareNav"

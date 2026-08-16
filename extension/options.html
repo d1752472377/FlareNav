@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FlareNav 扩展选项与配置</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    body {
+      background: #0b0f19;
+      color: #f1f5f9;
+      padding: 40px 20px;
+      display: flex;
+      justify-content: center;
+    }
+    .container {
+      max-width: 600px;
+      width: 100%;
+      background: #111827;
+      border: 1px solid #1f2937;
+      border-radius: 12px;
+      padding: 28px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #1f2937;
+    }
+    .logo {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, #f59e0b, #ea580c);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+    h1 {
+      font-size: 20px;
+      font-weight: 700;
+    }
+    p.desc {
+      font-size: 13px;
+      color: #9ca3af;
+      margin-top: 4px;
+    }
+    .form-group {
+      margin-bottom: 18px;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #d1d5db;
+      margin-bottom: 6px;
+    }
+    input {
+      width: 100%;
+      padding: 10px 12px;
+      background: #1f2937;
+      border: 1px solid #374151;
+      border-radius: 8px;
+      color: #f9fafb;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input:focus {
+      border-color: #3b82f6;
+    }
+    .help-text {
+      font-size: 12px;
+      color: #6b7280;
+      margin-top: 4px;
+    }
+    .btn-row {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+    }
+    button {
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: background 0.2s, opacity 0.2s;
+    }
+    .btn-primary {
+      background: #2563eb;
+      color: #ffffff;
+      flex: 1;
+    }
+    .btn-primary:hover {
+      background: #1d4ed8;
+    }
+    .btn-secondary {
+      background: #374151;
+      color: #f3f4f6;
+    }
+    .btn-secondary:hover {
+      background: #4b5563;
+    }
+    .status-box {
+      margin-top: 18px;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      display: none;
+    }
+    .status-box.success {
+      display: block;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid #059669;
+      color: #6ee7b7;
+    }
+    .status-box.error {
+      display: block;
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid #dc2626;
+      color: #fca5a5;
+    }
+    .doc-section {
+      margin-top: 28px;
+      padding-top: 20px;
+      border-top: 1px solid #1f2937;
+      font-size: 13px;
+      color: #9ca3af;
+      line-height: 1.6;
+    }
+    .doc-section code {
+      background: #1f2937;
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: #38bdf8;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">⚡</div>
+      <div>
+        <h1>FlareNav 扩展设置</h1>
+        <p class="desc">配置您的自托管 Cloudflare Pages + D1 导航系统连接信息</p>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="apiUrl">FlareNav 服务器地址 (API URL)</label>
+      <input type="url" id="apiUrl" placeholder="https://your-nav.pages.dev" required />
+      <p class="help-text">例如：<code>https://nav.yourdomain.com</code> 或本地开发 <code>http://localhost:3000</code></p>
+    </div>
+
+    <div class="form-group">
+      <label for="secretToken">管理员访问密钥 (Admin Secret Key / Token)</label>
+      <input type="password" id="secretToken" placeholder="admin123 或您在 wrangler.toml 中设定的 ADMIN_SECRET_KEY" />
+      <p class="help-text">需与 Cloudflare Pages 环境变量或 <code>wrangler.toml</code> 中的 <code>ADMIN_SECRET_KEY</code> 一致。</p>
+    </div>
+
+    <div class="btn-row">
+      <button id="saveBtn" class="btn-primary">💾 保存配置</button>
+      <button id="testBtn" class="btn-secondary">⚡ 测试连接</button>
+    </div>
+
+    <div id="statusBox" class="status-box"></div>
+
+    <div class="doc-section">
+      <h3 style="color:#e5e7eb; font-size:14px; margin-bottom:8px;">💡 使用小贴士</h3>
+      <ul style="padding-left: 18px;">
+        <li>安装扩展后，右键任意网页选择 <strong>"收藏到 FlareNav 导航"</strong> 即可快速收录。</li>
+        <li>在弹出面板中支持即时搜索与书签分类选择。</li>
+        <li>支持自动抓取当前标签页的 Favicon 与页面元数据。</li>
+      </ul>
+    </div>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>

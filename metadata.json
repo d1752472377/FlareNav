@@ -1,0 +1,6 @@
+{
+  "name": "FlareNav - Cloudflare D1 个人导航与书签系统",
+  "description": "基于 Cloudflare Pages + Cloudflare D1 (SQLite) 架构的轻量级自托管个人导航标签系统，配备 Chrome 浏览器收藏插件与自动元数据抓取。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FlareNav 收藏助手</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <!-- Header -->
+    <header class="header">
+      <div class="brand">
+        <div class="logo-badge">⚡</div>
+        <div class="brand-text">
+          <div class="title">FlareNav</div>
+          <div class="subtitle" id="statusText">正在连接...</div>
+        </div>
+      </div>
+      <a href="options.html" target="_blank" class="settings-btn" title="配置服务器与密钥">⚙️</a>
+    </header>
+
+    <!-- Unconfigured Warning -->
+    <div id="unconfiguredAlert" class="alert-box hidden">
+      <p>⚠️ 尚未配置 FlareNav 服务器地址</p>
+      <button id="openOptionsBtn" class="btn btn-secondary btn-sm">前往设置</button>
+    </div>
+
+    <!-- Main Form -->
+    <form id="bookmarkForm" class="form">
+      <div class="form-group">
+        <label for="url">网页链接 (URL)</label>
+        <div class="input-with-icon">
+          <img id="faviconPreview" class="favicon-preview" src="icon.png" alt="icon" />
+          <input type="url" id="url" required placeholder="https://example.com" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="title">网页标题</label>
+        <input type="text" id="title" required placeholder="网站名称或文章标题" />
+      </div>
+
+      <div class="form-group">
+        <label for="category">所属分类</label>
+        <div class="select-wrapper">
+          <select id="category" required>
+            <option value="" disabled selected>加载分类中...</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="description">简要备注 / 描述</label>
+        <textarea id="description" rows="2" placeholder="可在此输入页面摘要或个人备注（选填）"></textarea>
+      </div>
+
+      <div class="form-row">
+        <label class="checkbox-label">
+          <input type="checkbox" id="isPinned" />
+          <span>置顶推荐</span>
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" id="isPrivate" />
+          <span>私有书签</span>
+        </label>
+      </div>
+
+      <div class="actions">
+        <button type="submit" id="submitBtn" class="btn btn-primary">
+          <span id="btnText">⚡ 一键收藏到导航</span>
+          <span id="btnLoading" class="spinner hidden"></span>
+        </button>
+      </div>
+
+      <div id="resultMsg" class="result-msg hidden"></div>
+    </form>
+
+    <!-- Quick Search Section -->
+    <div class="quick-search-section">
+      <div class="section-title">🔍 快速检索我的导航</div>
+      <input type="text" id="quickSearchInput" placeholder="输入关键词检索书签..." />
+      <div id="quickSearchResults" class="quick-results-list"></div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "FlareNav - 快捷网页收藏助手",
+  "version": "1.0.0",
+  "description": "一键将当前网页收藏至您的自托管 FlareNav (Cloudflare Pages + D1) 个人导航系统，支持智能抓取标题、摘要与图标。",
+  "icons": {
+    "16": "icon.png",
+    "48": "icon.png",
+    "128": "icon.png"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "添加到 FlareNav 导航",
+    "default_icon": "icon.png"
+  },
+  "options_page": "options.html",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "contextMenus"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  }
+}
