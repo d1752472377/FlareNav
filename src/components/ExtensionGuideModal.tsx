@@ -374,7 +374,7 @@ input:focus, textarea:focus, select:focus { border-color: #f59e0b; background: #
     if (!url || !config.apiUrl) return;
 
     aiBanner.classList.remove('hidden');
-    aiSuggestionText.textContent = '✨ Cloudflare AI (@cf/glm-4.7-flash) 正在分析推荐分类与功能摘要...';
+    aiSuggestionText.textContent = '✨ AI 正在快速推断最佳分类与特征摘要...';
 
     try {
       const resp = await fetch(config.apiUrl + '/api/classify', {
@@ -395,27 +395,29 @@ input:focus, textarea:focus, select:focus { border-color: #f59e0b; background: #
       const res = await resp.json();
       if (resp.ok && res.success) {
         const catName = res.category_name || '智能推荐';
-        aiSuggestionText.innerHTML = '推荐放入：<strong>【' + catName + '】</strong><br><span style="color:#94a3b8; font-size:10px;">' + (res.summary || res.reasoning || '') + '</span>';
         aiCatBadge.classList.remove('hidden');
 
-        // Check if category exists or needs new option
-        let matchedOption = Array.from(categorySelect.options).find(o => o.value === res.category_id || o.textContent === catName);
+        // 1. Auto apply category selection
+        let matchedOption = Array.from(categorySelect.options).find(o => o.value === res.category_id || o.textContent.includes(catName));
         if (matchedOption) {
           categorySelect.value = matchedOption.value;
-        } else if (res.category_id) {
+        } else {
+          // If suggested a new category, dynamically append and select it!
           const newOpt = document.createElement('option');
-          newOpt.value = res.category_id;
-          newOpt.textContent = '✨ ' + catName;
+          newOpt.value = 'new_cat_' + catName;
+          newOpt.textContent = '✨ 推荐新建：' + catName;
           categorySelect.appendChild(newOpt);
-          categorySelect.value = res.category_id;
+          categorySelect.value = newOpt.value;
         }
 
-        // Fill description if empty
-        if (!descInput.value.trim() && res.summary) {
+        // 2. Auto fill description if empty or basic title
+        if (res.summary && (!descInput.value.trim() || descInput.value.trim() === title)) {
           descInput.value = res.summary;
         }
 
-        // Render suggested tags
+        aiSuggestionText.innerHTML = '✨ <b>已自动匹配分类【' + catName + '】</b>' + (res.summary ? '<br><span style="color:#cbd5e1; font-size:10px;">' + res.summary + '</span>' : '');
+
+        // 3. Render suggested tags
         if (res.suggested_tags && res.suggested_tags.length > 0) {
           aiTagsContainer.classList.remove('hidden');
           aiTagsContainer.innerHTML = res.suggested_tags.map(t => '<span class="ai-tag-chip" data-tag="' + t + '">+ ' + t + '</span>').join('');
@@ -429,7 +431,7 @@ input:focus, textarea:focus, select:focus { border-color: #f59e0b; background: #
           });
         }
       } else {
-        aiSuggestionText.textContent = 'AI 推断完成 (已匹配最适分类)';
+        aiSuggestionText.textContent = 'AI 推荐就绪 (未触发新规则)';
       }
     } catch (e) {
       aiBanner.classList.add('hidden');

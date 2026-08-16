@@ -97,16 +97,30 @@ export const BookmarkModal: React.FC<BookmarkModalProps> = ({
       });
       setAiResult(res);
 
-      // Match category
-      if (res.category_id) {
-        const matched = categories.find((c) => c.id === res.category_id || (res.category_name && c.name.toLowerCase() === res.category_name.toLowerCase()));
-        if (matched) {
-          setCategoryId(matched.id);
+      // 1. Seamless Category Matching or Creation
+      const catName = res.category_name || '智能推荐';
+      const matched = categories.find((c) => c.id === res.category_id || c.name.toLowerCase() === catName.toLowerCase());
+      
+      if (matched) {
+        setCategoryId(matched.id);
+      } else if (catName && onCategoryCreated) {
+        // Automatically create and select newly recommended category!
+        try {
+          const newCat = await createCategory({
+            name: catName,
+            icon: res.suggested_icon || 'Sparkles',
+            color: res.suggested_color || '#f59e0b',
+            sort_order: categories.length + 1,
+          });
+          if (onCategoryCreated) onCategoryCreated(newCat);
+          setCategoryId(newCat.id);
+        } catch (catErr) {
+          console.warn('Auto create category failed:', catErr);
         }
       }
 
-      // If description was empty, fill with AI summary
-      if (!description.trim() && res.summary) {
+      // 2. Seamless Description Summary Population
+      if (res.summary && (!targetDesc.trim() || targetDesc.trim() === targetTitle.trim())) {
         setDescription(res.summary);
       }
     } catch (e) {

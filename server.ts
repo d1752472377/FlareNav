@@ -372,7 +372,7 @@ app.post('/api/classify', (req, res) => {
   let suggestedIcon = 'Sparkles';
   let suggestedColor = '#f59e0b';
   let tags = ['常用工具', '生产力'];
-  let summary = description ? description.slice(0, 45) : `${title || '该网站'} 官方平台与常用入口`;
+  let summary = description ? description.slice(0, 50) : '';
 
   if (
     combined.includes('ai') || combined.includes('gpt') || combined.includes('claude') ||
@@ -385,7 +385,7 @@ app.post('/api/classify', (req, res) => {
     suggestedIcon = 'Bot';
     suggestedColor = '#8b5cf6';
     tags = ['AI大模型', '智能体', '生产力工具'];
-    summary = `${title || '该平台'} 聚焦大语言模型与人工智能前沿应用`;
+    if (!summary) summary = '人工智能大语言模型与 AI 智能体在线工具';
   } else if (
     combined.includes('github') || combined.includes('code') || combined.includes('dev') ||
     combined.includes('api') || combined.includes('docs') || combined.includes('react') ||
@@ -397,7 +397,7 @@ app.post('/api/classify', (req, res) => {
     suggestedIcon = 'Code';
     suggestedColor = '#3b82f6';
     tags = ['代码编程', '开源技术', '开发文档'];
-    summary = `${title || '技术站点'} 提供现代软件开发与工程技术支持`;
+    if (!summary) summary = '软件工程、开源代码仓库与技术开发资源';
   } else if (
     combined.includes('design') || combined.includes('figma') || combined.includes('dribbble') ||
     combined.includes('icon') || combined.includes('ui') || combined.includes('ux') ||
@@ -409,7 +409,7 @@ app.post('/api/classify', (req, res) => {
     suggestedIcon = 'Palette';
     suggestedColor = '#ec4899';
     tags = ['UI/UX', '视觉设计', '灵感素材'];
-    summary = `${title || '设计站点'} 汇聚优质视觉创意与界面设计资源`;
+    if (!summary) summary = 'UI/UX 界面设计、创意灵感与视觉素材库';
   } else if (
     combined.includes('cloud') || combined.includes('cloudflare') || combined.includes('aws') ||
     combined.includes('vps') || combined.includes('server') || combined.includes('docker') ||
@@ -421,7 +421,7 @@ app.post('/api/classify', (req, res) => {
     suggestedIcon = 'Cloud';
     suggestedColor = '#06b6d4';
     tags = ['云原生', 'Serverless', '网络架构'];
-    summary = `${title || '云服务平台'} 提供全球化基础设施与无服务器托管`;
+    if (!summary) summary = '云计算基础设施与全球无服务器托管服务';
   } else if (
     combined.includes('news') || combined.includes('blog') || combined.includes('read') ||
     combined.includes('article') || combined.includes('v2ex') || combined.includes('hack') ||
@@ -433,7 +433,7 @@ app.post('/api/classify', (req, res) => {
     suggestedIcon = 'BookOpen';
     suggestedColor = '#10b981';
     tags = ['深度阅读', '行业前沿', '极客资讯'];
-    summary = `${title || '资讯媒体'} 汇集高质量科技与行业动态`;
+    if (!summary) summary = '高质量技术博文与极客社区资讯讨论';
   } else if (
     combined.includes('video') || combined.includes('movie') || combined.includes('music') ||
     combined.includes('game') || combined.includes('bilibili') || combined.includes('youtube') ||
@@ -444,7 +444,7 @@ app.post('/api/classify', (req, res) => {
     suggestedIcon = 'Tv';
     suggestedColor = '#f43f5e';
     tags = ['影音流媒体', '数字娱乐', '休闲'];
-    summary = `${title || '娱乐站点'} 汇集精彩影音流媒体与休闲内容`;
+    if (!summary) summary = '流媒体视频播放与长短视频社区内容';
   }
 
   const categoryList = Array.isArray(customCategories) && customCategories.length > 0 ? customCategories : categories;

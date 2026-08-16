@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FlareNav 收藏助手</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <header class="header">
+      <div class="brand">
+        <div class="logo-badge">⚡</div>
+        <div class="brand-text">
+          <div class="title">FlareNav</div>
+          <div class="subtitle" id="statusText">正在连接...</div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="aiRerunBtn" class="ai-icon-btn" title="重新调用 AI 智能推断分类与摘要">✨</button>
+        <a href="options.html" target="_blank" class="settings-btn" title="配置服务器与密钥">⚙️</a>
+      </div>
+    </header>
+
+    <div id="unconfiguredAlert" class="alert-box hidden">
+      <p>⚠️ 尚未配置 FlareNav 服务器地址</p>
+      <button id="openOptionsBtn" class="btn btn-secondary btn-sm">前往设置</button>
+    </div>
+
+    <!-- AI Suggestion Banner -->
+    <div id="aiBanner" class="ai-banner hidden">
+      <div class="ai-banner-header">
+        <span class="ai-sparkle">🤖</span>
+        <span class="ai-title">Cloudflare Workers AI 极速智能推荐</span>
+      </div>
+      <div id="aiSuggestionText" class="ai-suggestion-text">正在分析网页分类与摘要...</div>
+    </div>
+
+    <form id="bookmarkForm" class="form">
+      <div class="form-group">
+        <label for="url">网页链接 (URL)</label>
+        <div class="input-with-icon">
+          <img id="faviconPreview" class="favicon-preview" src="../icon-16.png" alt="icon" />
+          <input type="url" id="url" required placeholder="https://example.com" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="title">网页标题</label>
+        <input type="text" id="title" required placeholder="正在读取页面标题..." />
+      </div>
+
+      <div class="form-group">
+        <div class="label-row">
+          <label for="category">所属分类</label>
+          <span id="aiCatBadge" class="ai-badge hidden">✨ AI 已自动匹配选中</span>
+        </div>
+        <div class="select-wrapper">
+          <select id="category" required>
+            <option value="" disabled selected>加载分类中...</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <div class="label-row">
+          <label for="description">简要备注 / AI 功能摘要</label>
+        </div>
+        <textarea id="description" rows="2" placeholder="可在此输入页面摘要或由 AI 自动填充"></textarea>
+        <!-- AI Suggested Tags -->
+        <div id="aiTagsContainer" class="ai-tags-row hidden"></div>
+      </div>
+
+      <div class="custom-toggle-row">
+        <div id="togglePinned" class="custom-toggle-btn">
+          <div class="toggle-left">
+            <div class="toggle-box" id="pinnedBox">✓</div>
+            <span>📌 置顶到首页</span>
+          </div>
+        </div>
+        <div id="togglePrivate" class="custom-toggle-btn">
+          <div class="toggle-left">
+            <div class="toggle-box" id="privateBox">✓</div>
+            <span>🔒 私密书签</span>
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" id="submitBtn" class="btn btn-primary">
+        <span id="btnText">⚡ 立即收藏到 FlareNav</span>
+        <span id="btnLoading" class="hidden">正在保存到 D1 数据库...</span>
+      </button>
+    </form>
+
+    <div id="resultMsg" class="result-msg hidden"></div>
+
+    <!-- Quick Search Section -->
+    <div class="quick-search-section">
+      <div class="section-title">🔍 快速检索导航库内书签</div>
+      <input type="text" id="quickSearchInput" placeholder="输入搜索词以快速定位已存书签..." />
+      <div id="quickSearchResults" class="quick-results-list"></div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

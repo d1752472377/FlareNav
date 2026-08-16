@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FlareNav 扩展设置</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #f8fafc; padding: 24px; max-width: 520px; margin: 0 auto; }
+    h1 { font-size: 18px; margin-bottom: 16px; color: #fbbf24; display: flex; align-items: center; gap: 8px; }
+    .card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    label { font-size: 12px; font-weight: 600; color: #94a3b8; }
+    input { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 10px; color: #f8fafc; font-size: 13px; outline: none; }
+    input:focus { border-color: #f59e0b; }
+    .btn { background: #f59e0b; color: #0f172a; border: none; padding: 10px; border-radius: 8px; font-weight: 700; cursor: pointer; }
+    .btn:hover { background: #d97706; }
+    .status { font-size: 12px; padding: 8px; border-radius: 6px; text-align: center; display: none; }
+    .status.success { background: #064e3b; color: #6ee7b7; display: block; }
+    .status.error { background: #7f1d1d; color: #fca5a5; display: block; }
+    .quick-code-box { background: #0f172a; border: 1px dashed #f59e0b; padding: 10px; border-radius: 8px; margin-top: 6px; }
+  </style>
+</head>
+<body>
+  <h1>⚡ FlareNav 扩展选项与授权</h1>
+  <div class="card">
+    <div class="form-group">
+      <label>一键配置码解析 (从 FlareNav 网页端一键复制)</label>
+      <div class="quick-code-box">
+        <input type="text" id="quickCodeInput" placeholder="在此粘贴 fnv1:开头的配置码..." />
+        <button type="button" id="parseCodeBtn" class="btn" style="margin-top: 8px; padding: 6px;">✨ 一键自动解析绑定</button>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="apiUrl">1. FlareNav 服务器 API 地址</label>
+      <input type="url" id="apiUrl" placeholder="https://your-flarenav.pages.dev" />
+    </div>
+
+    <div class="form-group">
+      <label for="secretToken">2. 管理员 Secret Token</label>
+      <input type="password" id="secretToken" placeholder="默认 admin123 或自定义密钥" />
+    </div>
+
+    <button id="saveBtn" class="btn">💾 保存设置并测试连接</button>
+    <div id="status" class="status"></div>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>
