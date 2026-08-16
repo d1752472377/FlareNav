@@ -41,6 +41,7 @@ interface HeaderProps {
 
 export const SEARCH_ENGINES: SearchEngine[] = [
   { id: 'internal', name: '站内书签', icon: '⚡', placeholder: '搜索站内书签标题、网址或备注 (按 / 快捷聚焦)', urlTemplate: '' },
+  { id: 'ai', name: 'AI 语义检索', icon: '🤖', placeholder: '输入自然语言意图，如「写前端代码的工具」进行 AI 语义检索...', urlTemplate: '' },
   { id: 'google', name: 'Google', icon: '🔍', placeholder: '使用 Google 搜索...', urlTemplate: 'https://www.google.com/search?q=' },
   { id: 'bing', name: 'Bing', icon: '🎯', placeholder: '使用 Bing 搜索...', urlTemplate: 'https://www.bing.com/search?q=' },
   { id: 'github', name: 'GitHub', icon: '🐱', placeholder: '在 GitHub 检索仓库与开源项目...', urlTemplate: 'https://github.com/search?q=' },

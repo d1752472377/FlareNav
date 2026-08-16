@@ -211,6 +211,24 @@ export const DeployGuideModal: React.FC<DeployGuideModalProps> = ({
                 ⚠️ 注意：若在环境变量中修改了密钥，请使用您新设置的密钥登录，或者留空将继续使用默认密码 <code>admin123</code>。
               </p>
             </div>
+
+            {/* Step 6: Workers AI Binding */}
+            <div className={`border rounded-2xl p-4 space-y-2 ${cardBg}`}>
+              <div className={`flex items-center gap-2 font-bold text-xs ${isLight ? 'text-slate-900' : 'text-slate-100'}`}>
+                <span className="w-5 h-5 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center text-[11px] font-bold">6</span>
+                <span>开启 Cloudflare Workers AI 智能分类绑定 (可选增强)</span>
+              </div>
+              <p className={`text-[11px] ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                在 Pages 项目详情 <strong>Settings &gt; Functions &gt; Workers AI bindings</strong> 中绑定：
+              </p>
+              <div className={`border rounded-xl p-2.5 text-[11px] space-y-1 ${isLight ? 'bg-slate-100 border-slate-200 text-slate-700' : 'bg-slate-900 border-slate-800 text-slate-300'}`}>
+                <div>• Variable name (绑定名称): <code className="text-amber-500 font-mono font-bold">AI</code></div>
+                <div>• 选用模型: 免费原生支持 <code className="text-amber-600 dark:text-amber-400 font-mono font-bold">@cf/zai-org/glm-4.7-flash</code></div>
+              </div>
+              <p className={`text-[10px] ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                绑定后添加书签时将自动调用 GLM-4.7-Flash 进行毫秒级分类、生成中文摘要与标签建议，未配置时将使用内置智能规则降级运行。
+              </p>
+            </div>
           </div>
         </div>
 

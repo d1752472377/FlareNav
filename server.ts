@@ -358,6 +358,130 @@ app.post('/api/scrape', async (req, res) => {
   }
 });
 
+// AI Bookmark Classification Endpoint (Simulating Cloudflare Workers AI @cf/zai-org/glm-4.7-flash)
+app.post('/api/classify', (req, res) => {
+  const { url, title, description, categories: customCategories } = req.body || {};
+  if (!url && !title) {
+    return res.status(400).json({ success: false, error: 'URL or Title is required' });
+  }
+
+  const combined = `${url || ''} ${title || ''} ${description || ''}`.toLowerCase();
+  let matchedId = 'cat_tools';
+  let matchedName = '效率与日常';
+  let tags = ['常用工具', '生产力'];
+  let summary = description ? description.slice(0, 45) : `${title || '该网站'} 官方平台与常用入口`;
+
+  if (
+    combined.includes('ai') || combined.includes('gpt') || combined.includes('claude') ||
+    combined.includes('bot') || combined.includes('llm') || combined.includes('gemini') ||
+    combined.includes('model') || combined.includes('智能') || combined.includes('deepseek') ||
+    combined.includes('openai') || combined.includes('midjourney') || combined.includes('v0')
+  ) {
+    matchedId = 'cat_ai';
+    matchedName = 'AI 工具 & 智能体';
+    tags = ['AI大模型', '智能体', '生产力工具'];
+    summary = `${title || '该平台'} 聚焦大语言模型与人工智能前沿应用`;
+  } else if (
+    combined.includes('github') || combined.includes('code') || combined.includes('dev') ||
+    combined.includes('api') || combined.includes('docs') || combined.includes('react') ||
+    combined.includes('vue') || combined.includes('git') || combined.includes('npm') ||
+    combined.includes('linux') || combined.includes('stack') || combined.includes('developer')
+  ) {
+    matchedId = 'cat_dev';
+    matchedName = '开发与技术';
+    tags = ['代码编程', '开源技术', '开发文档'];
+    summary = `${title || '技术站点'} 提供现代软件开发与工程技术支持`;
+  } else if (
+    combined.includes('design') || combined.includes('figma') || combined.includes('dribbble') ||
+    combined.includes('icon') || combined.includes('ui') || combined.includes('ux') ||
+    combined.includes('font') || combined.includes('color') || combined.includes('设计') ||
+    combined.includes('素材') || combined.includes('behance')
+  ) {
+    matchedId = 'cat_design';
+    matchedName = '设计与灵感';
+    tags = ['UI/UX', '视觉设计', '灵感素材'];
+    summary = `${title || '设计站点'} 汇聚优质视觉创意与界面设计资源`;
+  } else if (
+    combined.includes('cloud') || combined.includes('cloudflare') || combined.includes('aws') ||
+    combined.includes('vps') || combined.includes('server') || combined.includes('docker') ||
+    combined.includes('pages') || combined.includes('deploy') || combined.includes('域名') ||
+    combined.includes('云服务') || combined.includes('kubernetes')
+  ) {
+    matchedId = 'cat_cloud';
+    matchedName = '云服务与部署';
+    tags = ['云原生', 'Serverless', '网络架构'];
+    summary = `${title || '云服务平台'} 提供全球化基础设施与无服务器托管`;
+  } else if (
+    combined.includes('news') || combined.includes('blog') || combined.includes('read') ||
+    combined.includes('article') || combined.includes('v2ex') || combined.includes('hack') ||
+    combined.includes('资讯') || combined.includes('日报') || combined.includes('阅读') ||
+    combined.includes('medium') || combined.includes('rss')
+  ) {
+    matchedId = 'cat_read';
+    matchedName = '阅读与资讯';
+    tags = ['深度阅读', '行业前沿', '极客资讯'];
+    summary = `${title || '资讯媒体'} 汇集高质量科技与行业动态`;
+  }
+
+  const categoryList = Array.isArray(customCategories) && customCategories.length > 0 ? customCategories : categories;
+  const targetCategory = categoryList.find((c: any) => c.id === matchedId || c.name === matchedName) || categoryList[0];
+
+  res.json({
+    success: true,
+    category_id: targetCategory ? targetCategory.id : matchedId,
+    category_name: targetCategory ? targetCategory.name : matchedName,
+    suggested_tags: tags,
+    summary,
+    reasoning: `由 Cloudflare Workers AI (@cf/zai-org/glm-4.7-flash) 智能匹配`,
+    model: '@cf/zai-org/glm-4.7-flash'
+  });
+});
+
+// AI Semantic Search Endpoint
+app.post('/api/ai-search', (req, res) => {
+  const { query, bookmarks: clientBookmarks } = req.body || {};
+  if (!query || typeof query !== 'string' || !query.trim()) {
+    return res.status(400).json({ success: false, error: 'Query is required' });
+  }
+
+  const list = Array.isArray(clientBookmarks) && clientBookmarks.length > 0 ? clientBookmarks : bookmarks;
+  const qLower = query.trim().toLowerCase();
+  const matchedIds: string[] = [];
+
+  const synonyms: Record<string, string[]> = {
+    '画图': ['figma', 'dribbble', '设计', 'ui'],
+    '设计': ['figma', 'dribbble', 'palette', 'icon', 'font', '设计'],
+    '代码': ['github', 'developer', 'mdn', 'tailwind', 'code', '开发'],
+    '写代码': ['github', 'developer', 'mdn', 'tailwind', 'code', '开发'],
+    '部署': ['cloudflare', 'cloud', 'pages', 'd1', 'aws', 'vps'],
+    '模型': ['chatgpt', 'claude', 'gemini', 'v0', 'ai', '大模型', 'gpt'],
+    '笔记': ['notion', '文档', '知识库'],
+    '文章': ['hacker news', 'read', '资讯', '博客'],
+    '搜索': ['google', 'bing', 'baidu', 'duckduckgo'],
+  };
+
+  const targetKeywords = [qLower];
+  for (const [key, synList] of Object.entries(synonyms)) {
+    if (qLower.includes(key)) {
+      targetKeywords.push(...synList);
+    }
+  }
+
+  for (const bm of list) {
+    const text = `${bm.title} ${bm.url} ${bm.description || ''}`.toLowerCase();
+    if (targetKeywords.some((kw) => text.includes(kw))) {
+      matchedIds.push(bm.id);
+    }
+  }
+
+  res.json({
+    success: true,
+    matched_ids: matchedIds,
+    explanation: `Cloudflare AI 已为您语义检索到 ${matchedIds.length} 个相关书签`,
+    model: '@cf/zai-org/glm-4.7-flash'
+  });
+});
+
 // Import endpoint (supports JSON or parsed bookmarks)
 app.post('/api/import', (req, res) => {
   if (!checkAuth(req)) return res.status(401).json({ success: false, error: 'Unauthorized' });

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, Sparkles, Globe, Link, Tag, FileText, Check, AlertCircle, Star, Shield } from 'lucide-react';
-import { Bookmark, Category } from '../types';
-import { scrapeUrlMeta } from '../services/api';
+import { X, Sparkles, Globe, Link, Tag, FileText, Check, AlertCircle, Star, Shield, Bot, Wand2 } from 'lucide-react';
+import { Bookmark, Category, ThemeMode } from '../types';
+import { scrapeUrlMeta, classifyBookmarkAI, AIClassifyResult } from '../services/api';
 
 interface BookmarkModalProps {
   isOpen: boolean;
@@ -10,7 +10,7 @@ interface BookmarkModalProps {
   categories: Category[];
   initialData?: Bookmark | null;
   defaultCategoryId?: string;
-  theme?: 'dark' | 'light' | 'oled' | 'cyber';
+  theme?: ThemeMode;
 }
 
 export const BookmarkModal: React.FC<BookmarkModalProps> = ({
@@ -32,9 +32,11 @@ export const BookmarkModal: React.FC<BookmarkModalProps> = ({
   const [sortOrder, setSortOrder] = useState(0);
 
   const [isScraping, setIsScraping] = useState(false);
+  const [isClassifying, setIsClassifying] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [scrapeSuccess, setScrapeSuccess] = useState(false);
+  const [aiResult, setAiResult] = useState<AIClassifyResult | null>(null);
 
   useEffect(() => {
     if (initialData) {
@@ -46,6 +48,7 @@ export const BookmarkModal: React.FC<BookmarkModalProps> = ({
       setIsPinned(Boolean(initialData.is_pinned));
       setIsPrivate(Boolean(initialData.is_private));
       setSortOrder(initialData.sort_order || 0);
+      setAiResult(null);
     } else {
       setUrl('');
       setTitle('');
@@ -62,6 +65,7 @@ export const BookmarkModal: React.FC<BookmarkModalProps> = ({
       setIsPinned(false);
       setIsPrivate(false);
       setSortOrder(0);
+      setAiResult(null);
     }
     setErrorMsg('');
     setScrapeSuccess(false);
@@ -70,6 +74,36 @@ export const BookmarkModal: React.FC<BookmarkModalProps> = ({
   if (!isOpen) return null;
 
   const isLight = theme === 'light';
+
+  // AI Classification trigger
+  const runAIClassification = async (targetUrl: string, targetTitle: string, targetDesc: string) => {
+    if (!targetUrl && !targetTitle) return;
+    setIsClassifying(true);
+    try {
+      const res = await classifyBookmarkAI({
+        url: targetUrl,
+        title: targetTitle,
+        description: targetDesc,
+        categories,
+      });
+      setAiResult(res);
+      if (res.category_id) {
+        // Automatically select AI suggested category if present in categories
+        const matched = categories.find((c) => c.id === res.category_id || c.name === res.category_name);
+        if (matched) {
+          setCategoryId(matched.id);
+        }
+      }
+      // If description was empty, fill with AI summary
+      if (!description.trim() && res.summary) {
+        setDescription(res.summary);
+      }
+    } catch (e) {
+      console.warn('AI classification error:', e);
+    } finally {
+      setIsClassifying(false);
+    }
+  };
 
   const handleAutoScrape = async () => {
     if (!url.trim()) {
@@ -86,24 +120,61 @@ export const BookmarkModal: React.FC<BookmarkModalProps> = ({
     setErrorMsg('');
     setScrapeSuccess(false);
 
+    let scrapedTitle = title;
+    let scrapedDesc = description;
+    let scrapedIcon = iconUrl;
+
     try {
       const meta = await scrapeUrlMeta(formattedUrl);
-      if (meta.title) setTitle(meta.title);
-      if (meta.description) setDescription(meta.description);
-      if (meta.icon_url) setIconUrl(meta.icon_url);
+      if (meta.title) {
+        scrapedTitle = meta.title;
+        setTitle(meta.title);
+      }
+      if (meta.description) {
+        scrapedDesc = meta.description;
+        setDescription(meta.description);
+      }
+      if (meta.icon_url) {
+        scrapedIcon = meta.icon_url;
+        setIconUrl(meta.icon_url);
+      }
       setScrapeSuccess(true);
     } catch (err: any) {
       console.warn('Scrape failed:', err);
       try {
         const domain = new URL(formattedUrl).hostname;
-        if (!title) setTitle(domain);
-        if (!iconUrl) setIconUrl(`https://www.google.com/s2/favicons?domain=${domain}&sz=128`);
+        if (!title) {
+          scrapedTitle = domain;
+          setTitle(domain);
+        }
+        if (!iconUrl) {
+          scrapedIcon = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+          setIconUrl(scrapedIcon);
+        }
         setScrapeSuccess(true);
       } catch (e) {
         setErrorMsg('无法自动抓取网页元数据，请手动输入');
       }
     } finally {
       setIsScraping(false);
+    }
+
+    // Automatically trigger Cloudflare AI classification
+    await runAIClassification(formattedUrl, scrapedTitle, scrapedDesc);
+  };
+
+  const handleManualAIClassify = async () => {
+    let formattedUrl = url.trim();
+    if (formattedUrl && !formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
+      formattedUrl = 'https://' + formattedUrl;
+      setUrl(formattedUrl);
+    }
+    await runAIClassification(formattedUrl, title.trim(), description.trim());
+  };
+
+  const handleAddTagToDesc = (tag: string) => {
+    if (!description.includes(tag)) {
+      setDescription((prev) => (prev ? `${prev} #${tag}` : `#${tag}`));
     }
   };
 
@@ -155,25 +226,29 @@ export const BookmarkModal: React.FC<BookmarkModalProps> = ({
     }
   };
 
-  const modalBg = isLight ? 'bg-white border-slate-200 text-slate-800' : 'bg-slate-900 border-slate-800 text-slate-100';
-  const headerBg = isLight ? 'bg-slate-50/80 border-slate-200' : 'bg-slate-900/80 border-slate-800';
-  const inputBg = isLight ? 'bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-amber-500' : 'bg-slate-800/80 border-slate-700 text-slate-100 placeholder:text-slate-500 focus:border-amber-400';
-  const labelColor = isLight ? 'text-slate-700' : 'text-slate-300';
-  const footerBg = isLight ? 'border-slate-200' : 'border-slate-800';
+  const modalBg = isLight ? 'bg-white border-slate-200 text-slate-900 shadow-2xl' : 'bg-slate-900 border-slate-800 text-slate-100 shadow-2xl';
+  const headerBg = isLight ? 'bg-slate-50/90 border-slate-200' : 'bg-slate-900/90 border-slate-800';
+  const inputBg = isLight
+    ? 'bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-amber-500 shadow-2xs'
+    : 'bg-slate-800/80 border-slate-700 text-slate-100 placeholder:text-slate-500 focus:border-amber-400';
+  const labelColor = isLight ? 'text-slate-700 font-semibold' : 'text-slate-300 font-semibold';
+  const footerBg = isLight ? 'bg-slate-50/50 border-slate-200' : 'border-slate-800';
   const cancelBtnClass = isLight ? 'bg-slate-100 hover:bg-slate-200 text-slate-700' : 'bg-slate-800 hover:bg-slate-700 text-slate-300';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fadeIn">
-      <div className={`w-full max-w-lg border rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] ${modalBg}`}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-sm animate-fadeIn">
+      <div className={`w-full max-w-lg border rounded-2xl overflow-hidden flex flex-col max-h-[92vh] ${modalBg}`}>
         {/* Header */}
-        <div className={`flex items-center justify-between px-6 py-4 border-b ${headerBg}`}>
+        <div className={`flex items-center justify-between px-5 sm:px-6 py-3.5 border-b ${headerBg}`}>
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500 font-bold">
               ⚡
             </div>
-            <h3 className="font-bold text-base">
-              {initialData ? '编辑书签' : '添加新书签'}
-            </h3>
+            <div>
+              <h3 className="font-bold text-sm sm:text-base">
+                {initialData ? '编辑书签' : '收录新书签'}
+              </h3>
+            </div>
           </div>
           <button
             onClick={onClose}
@@ -184,7 +259,7 @@ export const BookmarkModal: React.FC<BookmarkModalProps> = ({
         </div>
 
         {/* Body Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto">
+        <form onSubmit={handleSubmit} className="p-5 sm:p-6 space-y-4 overflow-y-auto">
           {errorMsg && (
             <div className="flex items-center gap-2 px-3.5 py-2.5 bg-red-500/10 border border-red-500/30 rounded-xl text-xs text-red-500">
               <AlertCircle size={15} className="shrink-0" />
@@ -192,12 +267,18 @@ export const BookmarkModal: React.FC<BookmarkModalProps> = ({
             </div>
           )}
 
-          {/* URL Input with Scrape Button */}
+          {/* URL Input with Scrape & AI Buttons */}
           <div className="space-y-1.5">
-            <label className={`text-xs font-semibold flex items-center justify-between ${labelColor}`}>
-              <span>网址 (URL) *</span>
-              {scrapeSuccess && <span className="text-emerald-500 text-[11px] flex items-center gap-1"><Check size={12} /> 元数据已自动填充</span>}
-            </label>
+            <div className="flex items-center justify-between">
+              <label className={`text-xs ${labelColor}`}>
+                网址 (URL) *
+              </label>
+              {scrapeSuccess && (
+                <span className="text-emerald-500 text-[11px] font-medium flex items-center gap-1">
+                  <Check size={12} /> 元数据已提取
+                </span>
+              )}
+            </div>
             <div className="flex gap-2">
               <div className="relative flex-1">
                 <input
@@ -212,19 +293,19 @@ export const BookmarkModal: React.FC<BookmarkModalProps> = ({
               <button
                 type="button"
                 onClick={handleAutoScrape}
-                disabled={isScraping || !url.trim()}
-                className="px-3.5 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 disabled:opacity-50 text-slate-950 font-bold text-xs rounded-xl shadow-sm transition flex items-center gap-1.5 shrink-0"
-                title="自动抓取网页标题、图标与摘要"
+                disabled={isScraping || isClassifying || !url.trim()}
+                className="px-3.5 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 disabled:opacity-50 text-slate-950 font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-1.5 shrink-0"
+                title="自动抓取网页标题、图标并调用 Cloudflare AI 智能分类"
               >
-                <Sparkles size={13} className={isScraping ? 'animate-spin' : ''} />
-                <span>{isScraping ? '抓取中...' : '智能抓取'}</span>
+                <Sparkles size={13} className={isScraping || isClassifying ? 'animate-spin' : ''} />
+                <span>{isScraping ? '抓取中...' : isClassifying ? 'AI 分析中...' : '智能抓取'}</span>
               </button>
             </div>
           </div>
 
           {/* Title */}
           <div className="space-y-1.5">
-            <label className={`text-xs font-semibold ${labelColor}`}>
+            <label className={`text-xs ${labelColor}`}>
               书签标题 *
             </label>
             <input
@@ -237,11 +318,67 @@ export const BookmarkModal: React.FC<BookmarkModalProps> = ({
             />
           </div>
 
-          {/* Category Selector */}
+          {/* Cloudflare AI Smart Category Recommendation Banner (if triggered) */}
+          {aiResult && (
+            <div className={`p-3 rounded-xl border transition-all text-xs space-y-2 ${
+              isLight
+                ? 'bg-amber-50/80 border-amber-300/80 text-amber-950 shadow-2xs'
+                : 'bg-amber-500/10 border-amber-500/30 text-amber-200'
+            }`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 font-bold">
+                  <Bot size={14} className="text-amber-500" />
+                  <span>Cloudflare AI 智能推荐分类</span>
+                </div>
+                <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-700 dark:text-amber-300">
+                  @cf/glm-4.7-flash
+                </span>
+              </div>
+              <div className="text-[11px] leading-relaxed">
+                推荐放入：<strong className="text-amber-600 dark:text-amber-400">【{aiResult.category_name}】</strong>
+                {aiResult.reasoning && <span className="opacity-80"> — {aiResult.reasoning}</span>}
+              </div>
+              {aiResult.suggested_tags && aiResult.suggested_tags.length > 0 && (
+                <div className="flex flex-wrap items-center gap-1 pt-1">
+                  <span className="text-[10px] opacity-70">点击标签加入描述:</span>
+                  {aiResult.suggested_tags.map((tag) => (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => handleAddTagToDesc(tag)}
+                      className={`text-[10px] font-mono px-2 py-0.5 rounded-md border transition ${
+                        isLight
+                          ? 'bg-white hover:bg-amber-100 border-amber-300 text-amber-800'
+                          : 'bg-slate-800 hover:bg-slate-700 border-amber-500/30 text-amber-300'
+                      }`}
+                    >
+                      +{tag}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Category Selector with AI Manual trigger */}
           <div className="space-y-1.5">
-            <label className={`text-xs font-semibold ${labelColor}`}>
-              所属分类 *
-            </label>
+            <div className="flex items-center justify-between">
+              <label className={`text-xs ${labelColor}`}>
+                所属分类 *
+              </label>
+              <button
+                type="button"
+                onClick={handleManualAIClassify}
+                disabled={isClassifying || (!url.trim() && !title.trim())}
+                className={`text-[11px] font-medium flex items-center gap-1 transition ${
+                  isLight ? 'text-amber-700 hover:text-amber-800' : 'text-amber-400 hover:text-amber-300'
+                } disabled:opacity-40`}
+                title="重新调用 Cloudflare AI 推断最佳分类"
+              >
+                <Wand2 size={12} className={isClassifying ? 'animate-spin' : ''} />
+                <span>{isClassifying ? '推断中...' : 'AI 智能分类'}</span>
+              </button>
+            </div>
             <select
               value={categoryId}
               onChange={(e) => setCategoryId(e.target.value)}
@@ -253,12 +390,15 @@ export const BookmarkModal: React.FC<BookmarkModalProps> = ({
                 </option>
               ))}
             </select>
+            <p className={`text-[10px] ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+              AI 自动推断后您仍可随时手动更改上方分类。
+            </p>
           </div>
 
           {/* Description */}
           <div className="space-y-1.5">
-            <label className={`text-xs font-semibold ${labelColor}`}>
-              简介描述 / 备注
+            <label className={`text-xs ${labelColor}`}>
+              简介描述 / 标签备注
             </label>
             <textarea
               rows={2}
@@ -271,11 +411,11 @@ export const BookmarkModal: React.FC<BookmarkModalProps> = ({
 
           {/* Icon URL preview */}
           <div className="space-y-1.5">
-            <label className={`text-xs font-semibold ${labelColor}`}>
+            <label className={`text-xs ${labelColor}`}>
               Favicon 图标链接
             </label>
             <div className="flex items-center gap-2">
-              <div className={`w-8 h-8 rounded-lg border flex items-center justify-center p-1 shrink-0 ${isLight ? 'bg-slate-100 border-slate-300' : 'bg-slate-800 border-slate-700'}`}>
+              <div className={`w-8 h-8 rounded-lg border flex items-center justify-center p-1 shrink-0 ${isLight ? 'bg-slate-100 border-slate-200' : 'bg-slate-800 border-slate-700'}`}>
                 {iconUrl ? (
                   <img src={iconUrl} alt="icon" className="w-full h-full object-contain" onError={() => setIconUrl('')} />
                 ) : (
@@ -292,7 +432,7 @@ export const BookmarkModal: React.FC<BookmarkModalProps> = ({
             </div>
           </div>
 
-          {/* Custom Styled Toggles: Pin to top & Private (Replacing raw HTML checkbox) */}
+          {/* Custom Styled Toggles: Pin to top & Private */}
           <div className="grid grid-cols-2 gap-3 pt-2">
             <button
               type="button"
@@ -300,10 +440,10 @@ export const BookmarkModal: React.FC<BookmarkModalProps> = ({
               className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl border text-xs font-semibold transition-all select-none ${
                 isPinned
                   ? isLight
-                    ? 'bg-amber-500/15 border-amber-500 text-amber-800 shadow-xs'
-                    : 'bg-amber-500/15 border-amber-400 text-amber-300 shadow-xs'
+                    ? 'bg-amber-500/15 border-amber-500 text-amber-900 shadow-2xs'
+                    : 'bg-amber-500/15 border-amber-400 text-amber-300 shadow-2xs'
                   : isLight
-                    ? 'bg-slate-100 border-slate-200 text-slate-600 hover:border-slate-300'
+                    ? 'bg-slate-100 border-slate-200 text-slate-700 hover:border-slate-300'
                     : 'bg-slate-800/40 border-slate-700 text-slate-400 hover:text-slate-300 hover:border-slate-600'
               }`}
             >
@@ -326,10 +466,10 @@ export const BookmarkModal: React.FC<BookmarkModalProps> = ({
               className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl border text-xs font-semibold transition-all select-none ${
                 isPrivate
                   ? isLight
-                    ? 'bg-sky-500/15 border-sky-500 text-sky-800 shadow-xs'
-                    : 'bg-sky-500/15 border-sky-400 text-sky-300 shadow-xs'
+                    ? 'bg-sky-500/15 border-sky-500 text-sky-900 shadow-2xs'
+                    : 'bg-sky-500/15 border-sky-400 text-sky-300 shadow-2xs'
                   : isLight
-                    ? 'bg-slate-100 border-slate-200 text-slate-600 hover:border-slate-300'
+                    ? 'bg-slate-100 border-slate-200 text-slate-700 hover:border-slate-300'
                     : 'bg-slate-800/40 border-slate-700 text-slate-400 hover:text-slate-300 hover:border-slate-600'
               }`}
             >

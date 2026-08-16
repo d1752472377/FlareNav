@@ -100,7 +100,7 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
   };
 
   const toolbarBg = isLight
-    ? 'bg-white/80 border-slate-200 text-slate-800 shadow-xs backdrop-blur-md'
+    ? 'bg-white border-slate-200 text-slate-800 shadow-2xs backdrop-blur-md'
     : 'bg-slate-900/60 border-slate-800 text-slate-100 backdrop-blur-md';
 
   const cardBaseBg = isLight
@@ -112,8 +112,9 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
     : 'bg-slate-800/80 border-slate-700 text-slate-300';
 
   const cardTitleColor = isLight ? 'text-slate-900 group-hover:text-amber-600' : 'text-slate-100 group-hover:text-amber-400';
-  const cardDescColor = isLight ? 'text-slate-500' : 'text-slate-400';
+  const cardDescColor = isLight ? 'text-slate-600' : 'text-slate-400';
   const cardDomainColor = isLight ? 'text-slate-400' : 'text-slate-500';
+  const iconContainerBg = isLight ? 'bg-slate-100 border-slate-200' : 'bg-slate-800 border-slate-700/60';
 
   return (
     <div className="flex-1 flex flex-col gap-4">
@@ -188,15 +189,16 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
         <div
           className={`grid gap-3.5 sm:gap-4 transition-all duration-200 ${
             layout === 'compact'
-              ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+              ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3'
               : layout === 'bento'
-              ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5'
-              : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5'
+              ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5'
+              : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6'
           }`}
         >
-          {sortedBookmarks.map((bm) => {
+          {sortedBookmarks.map((bm, index) => {
             const cat = getCategory(bm.category_id);
             const isPinned = Boolean(bm.is_pinned);
+            const isBentoHero = layout === 'bento' && (index === 0 || (isPinned && index < 3));
 
             if (layout === 'compact') {
               return (
@@ -211,7 +213,7 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
                     rel="noopener noreferrer"
                     className="flex-1 flex items-center gap-3 min-w-0"
                   >
-                    <div className="relative shrink-0 w-8 h-8 rounded-lg bg-slate-800/30 dark:bg-slate-800 p-1 flex items-center justify-center border border-slate-200 dark:border-slate-700/50">
+                    <div className={`relative shrink-0 w-8 h-8 rounded-lg p-1 flex items-center justify-center border ${iconContainerBg}`}>
                       <img
                         src={bm.icon_url || `https://www.google.com/s2/favicons?domain=${getDomain(bm.url)}&sz=64`}
                         alt={bm.title}
@@ -234,7 +236,7 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
                           {bm.title}
                         </span>
                         {bm.is_private === 1 && (
-                          <span className="text-[10px] font-mono px-1 py-0.2 rounded bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20">
+                          <span className={`text-[10px] font-mono px-1 py-0.2 rounded border ${isLight ? 'bg-sky-50 text-sky-700 border-sky-200' : 'bg-sky-500/10 text-sky-400 border-sky-500/20'}`}>
                             私有
                           </span>
                         )}
@@ -261,7 +263,7 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
                             e.stopPropagation();
                             onTogglePin(bm);
                           }}
-                          className={`p-1.5 rounded-lg transition ${isPinned ? 'text-amber-500' : 'text-slate-400 hover:text-amber-500'}`}
+                          className={`p-1.5 rounded-lg transition ${isPinned ? 'text-amber-500' : isLight ? 'text-slate-400 hover:text-amber-600' : 'text-slate-400 hover:text-amber-400'}`}
                           title={isPinned ? '取消置顶' : '置顶'}
                         >
                           <Star size={13} className={isPinned ? 'fill-amber-500' : ''} />
@@ -301,14 +303,16 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
                 key={bm.id}
                 onClick={() => handleCardClick(bm)}
                 className={`group relative flex flex-col justify-between p-3.5 sm:p-4 rounded-2xl border transition-all duration-200 ${cardBaseBg} ${
-                  isPinned ? (isLight ? 'border-amber-300 ring-1 ring-amber-300/40 bg-amber-50/20' : 'border-amber-500/30 ring-1 ring-amber-500/10') : ''
+                  isBentoHero ? 'sm:col-span-2 sm:row-span-1' : ''
+                } ${
+                  isPinned ? (isLight ? 'border-amber-300 ring-1 ring-amber-300/40 bg-amber-50/25' : 'border-amber-500/30 ring-1 ring-amber-500/10') : ''
                 }`}
               >
                 <div>
                   {/* Card Header: Icon + Category Badge + Pin Status */}
                   <div className="flex items-start justify-between gap-2 mb-2.5">
                     <div className="relative">
-                      <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 p-2 flex items-center justify-center border border-slate-200 dark:border-slate-700/60 shadow-xs group-hover:scale-105 transition-transform">
+                      <div className={`w-10 h-10 rounded-xl p-2 flex items-center justify-center border shadow-xs group-hover:scale-105 transition-transform ${iconContainerBg}`}>
                         <img
                           src={bm.icon_url || `https://www.google.com/s2/favicons?domain=${getDomain(bm.url)}&sz=128`}
                           alt={bm.title}
@@ -331,7 +335,7 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
                         <span
                           className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
                           style={{
-                            backgroundColor: `${cat.color || '#3b82f6'}15`,
+                            backgroundColor: `${cat.color || '#3b82f6'}18`,
                             color: cat.color || '#3b82f6',
                           }}
                         >

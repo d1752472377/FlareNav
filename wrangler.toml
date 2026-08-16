@@ -1,0 +1,19 @@
+# Cloudflare Pages / Workers Configuration for FlareNav
+name = "flarenav"
+compatibility_date = "2026-08-16"
+
+# 1. Cloudflare Workers AI Binding (免费大模型与智能分类)
+# 使用模型: @cf/zai-org/glm-4.7-flash
+[ai]
+binding = "AI"
+
+# 2. Cloudflare D1 (SQLite) 数据库绑定
+# 在 Cloudflare Pages 控制台创建 D1 数据库后，填入相应的 database_name 与 database_id
+[[d1_databases]]
+binding = "DB"
+database_name = "flarenav_db"
+database_id = "your-d1-database-id"
+
+# 3. 静态前端资源输出目录
+[site]
+bucket = "./dist"

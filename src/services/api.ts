@@ -224,3 +224,48 @@ export async function importBookmarksData(payload: { importedCategories?: any[];
   }
   return json.count || 0;
 }
+
+export interface AIClassifyResult {
+  success: boolean;
+  category_id: string;
+  category_name: string;
+  suggested_tags: string[];
+  summary: string;
+  reasoning?: string;
+  model?: string;
+}
+
+export async function classifyBookmarkAI(payload: {
+  url?: string;
+  title?: string;
+  description?: string;
+  categories?: Category[];
+}): Promise<AIClassifyResult> {
+  const res = await fetch('/api/classify', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  const json = await res.json();
+  if (json.success) {
+    return json;
+  }
+  throw new Error(json.error || 'AI 智能分类推断失败');
+}
+
+export async function searchBookmarksAI(query: string, bookmarks: Bookmark[]): Promise<{ matched_ids: string[]; explanation: string }> {
+  const res = await fetch('/api/ai-search', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query, bookmarks }),
+  });
+  const json = await res.json();
+  if (json.success) {
+    return {
+      matched_ids: json.matched_ids || [],
+      explanation: json.explanation || '',
+    };
+  }
+  throw new Error(json.error || 'AI 语义搜索失败');
+}
+
