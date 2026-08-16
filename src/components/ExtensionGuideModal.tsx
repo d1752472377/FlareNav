@@ -28,12 +28,14 @@ export const ExtensionGuideModal: React.FC<ExtensionGuideModalProps> = ({
   const [isZipping, setIsZipping] = useState(false);
   const [copiedUrl, setCopiedUrl] = useState(false);
   const [copiedToken, setCopiedToken] = useState(false);
-  const [activeTab, setActiveTab] = useState<'guide' | 'download' | 'code'>('guide');
+  const [copiedQuickCode, setCopiedQuickCode] = useState(false);
+  const [activeTab, setActiveTab] = useState<'guide' | 'download' | 'workflow' | 'code'>('guide');
 
   if (!isOpen) return null;
 
   const currentApiUrl = window.location.origin;
   const currentToken = getStoredAdminToken() || 'admin123';
+  const quickConfigString = `fnv1:${btoa(JSON.stringify({ url: currentApiUrl, token: currentToken }))}`;
 
   // 1-Click Package & Download ZIP using JSZip
   const handleDownloadZip = async () => {
@@ -539,10 +541,10 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex items-center border-b border-slate-800 bg-slate-900/50 px-6 gap-4">
+        <div className="flex items-center border-b border-slate-800 bg-slate-900/50 px-6 gap-4 overflow-x-auto">
           <button
             onClick={() => setActiveTab('guide')}
-            className={`py-2.5 text-xs font-semibold border-b-2 transition ${
+            className={`py-2.5 text-xs font-semibold border-b-2 transition whitespace-nowrap ${
               activeTab === 'guide'
                 ? 'border-amber-400 text-amber-400'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -552,7 +554,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
           </button>
           <button
             onClick={() => setActiveTab('download')}
-            className={`py-2.5 text-xs font-semibold border-b-2 transition ${
+            className={`py-2.5 text-xs font-semibold border-b-2 transition whitespace-nowrap ${
               activeTab === 'download'
                 ? 'border-amber-400 text-amber-400'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -561,8 +563,18 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
             📦 一键下载与连接参数
           </button>
           <button
+            onClick={() => setActiveTab('workflow')}
+            className={`py-2.5 text-xs font-semibold border-b-2 transition whitespace-nowrap ${
+              activeTab === 'workflow'
+                ? 'border-amber-400 text-amber-400'
+                : 'border-transparent text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            ⚡ 收藏与直接上传流程
+          </button>
+          <button
             onClick={() => setActiveTab('code')}
-            className={`py-2.5 text-xs font-semibold border-b-2 transition ${
+            className={`py-2.5 text-xs font-semibold border-b-2 transition whitespace-nowrap ${
               activeTab === 'code'
                 ? 'border-amber-400 text-amber-400'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -629,9 +641,9 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
                     4
                   </div>
                   <div>
-                    <div className="font-bold text-slate-100">填入 FlareNav 线上地址与密钥</div>
+                    <div className="font-bold text-slate-100">共用配置与一键连接</div>
                     <p className="text-slate-400 mt-0.5">
-                      在扩展详情中点击「选项」或点击弹出窗口右上角设置齿轮，填入您的 Cloudflare Pages 部署地址及 Admin Secret Token，即可享受右键一键收藏与弹出层即时检索！
+                      打开扩展设置，直接粘贴下方生成的「一键同步配置码」，即可瞬间完成当前网站与管理员密钥的绑定！
                     </p>
                   </div>
                 </div>
@@ -659,9 +671,36 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
                 </button>
               </div>
 
+              {/* 1-Click Quick Config String */}
+              <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="font-bold text-amber-300 text-xs flex items-center gap-1.5">
+                    <Sparkles size={14} />
+                    <span>✨ 一键同步配置码 (共用登录与站点配置)</span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(quickConfigString);
+                      setCopiedQuickCode(true);
+                      setTimeout(() => setCopiedQuickCode(false), 2000);
+                    }}
+                    className="px-3 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-[11px] rounded-lg transition flex items-center gap-1"
+                  >
+                    {copiedQuickCode ? <Check size={13} /> : <Copy size={13} />}
+                    <span>{copiedQuickCode ? '已复制' : '复制配置码'}</span>
+                  </button>
+                </div>
+                <p className="text-slate-300 text-[11px]">
+                  在扩展的设置选项页中，直接粘贴此配置码并点击「一键解析」，即可自动完成服务器地址与管理员 Token 的绑定！
+                </p>
+                <div className="bg-slate-950 border border-slate-800 rounded-xl p-2.5 font-mono text-[10px] text-slate-400 break-all select-all">
+                  {quickConfigString}
+                </div>
+              </div>
+
               {/* Connection Parameters Quick Copy */}
               <div className="bg-slate-800/40 border border-slate-700/60 rounded-2xl p-4 space-y-3">
-                <div className="font-bold text-slate-200 text-xs">🔑 插件连接参数 (直接复制填入扩展设置)</div>
+                <div className="font-bold text-slate-200 text-xs">🔑 插件手动连接参数</div>
 
                 <div className="space-y-1">
                   <label className="text-[11px] text-slate-400 font-semibold">1. 服务器地址 (API URL)</label>
@@ -690,6 +729,50 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
                     </button>
                   </div>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'workflow' && (
+            <div className="space-y-4">
+              <div className="bg-slate-800/50 border border-slate-700/70 rounded-2xl p-4 space-y-3">
+                <h4 className="font-bold text-slate-100 text-sm flex items-center gap-2">
+                  <span className="text-amber-400">⚡</span>
+                  <span>从浏览网页到直接上传至 Cloudflare D1 的完整流</span>
+                </h4>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                  <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-3 space-y-1.5">
+                    <div className="text-amber-400 font-bold text-xs">1. 浏览目标网页</div>
+                    <p className="text-[11px] text-slate-400">
+                      当您在任意网站（如 GitHub、博客、文档）时，点击浏览器右上角的 FlareNav 图标。
+                    </p>
+                  </div>
+
+                  <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-3 space-y-1.5">
+                    <div className="text-amber-400 font-bold text-xs">2. 智能提取信息</div>
+                    <p className="text-[11px] text-slate-400">
+                      扩展自动提取该网页的 Title、URL、高精度 Favicon 图标与 Meta 描述，并拉取您的实时分类。
+                    </p>
+                  </div>
+
+                  <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-3 space-y-1.5">
+                    <div className="text-amber-400 font-bold text-xs">3. 直传 Cloudflare D1</div>
+                    <p className="text-[11px] text-slate-400">
+                      点击「一键收藏」，书签数据立即写入您的 Cloudflare D1 SQLite 数据库，全端秒级同步！
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-4 space-y-1.5 text-[11px] text-slate-300">
+                <div className="font-bold text-emerald-300 text-xs flex items-center gap-1.5">
+                  <Check size={14} className="text-emerald-400" />
+                  <span>右键快捷收录支持</span>
+                </div>
+                <p>
+                  在网页中的任何链接或空白处点击鼠标右键，选择 <strong>「⚡ 收藏到 FlareNav 导航」</strong> 即可在后台完成收录，无需打断您的浏览！
+                </p>
               </div>
             </div>
           )}

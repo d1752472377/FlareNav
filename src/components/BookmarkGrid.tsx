@@ -280,10 +280,10 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
         </div>
       ) : (
         /* Standard Grid & Bento Mode */
-        <div className={`grid gap-3.5 ${
+        <div className={`grid gap-3.5 sm:gap-4 ${
           layout === 'bento'
-            ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
-            : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
+            ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6'
+            : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6'
         }`}>
           {sortedBookmarks.map((bm, index) => {
             const cat = getCategory(bm.category_id);

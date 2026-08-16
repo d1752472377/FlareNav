@@ -3,11 +3,52 @@
  */
 
 document.addEventListener('DOMContentLoaded', () => {
+  const quickCodeInput = document.getElementById('quickCodeInput');
+  const importCodeBtn = document.getElementById('importCodeBtn');
   const apiUrlInput = document.getElementById('apiUrl');
   const secretTokenInput = document.getElementById('secretToken');
   const saveBtn = document.getElementById('saveBtn');
   const testBtn = document.getElementById('testBtn');
   const statusBox = document.getElementById('statusBox');
+
+  // Parse quick code if pasted
+  importCodeBtn?.addEventListener('click', () => {
+    const raw = (quickCodeInput?.value || '').trim();
+    if (!raw) {
+      showStatus('❌ 请先粘贴网站配置码', false);
+      return;
+    }
+
+    try {
+      let parsedUrl = '';
+      let parsedToken = '';
+
+      if (raw.startsWith('flarenav://') || raw.startsWith('fnv1:')) {
+        const payload = raw.replace(/^(flarenav:\/\/config\?data=|fnv1:)/, '');
+        const decoded = JSON.parse(atob(payload));
+        parsedUrl = decoded.url || '';
+        parsedToken = decoded.token || '';
+      } else if (raw.startsWith('{')) {
+        const decoded = JSON.parse(raw);
+        parsedUrl = decoded.url || decoded.apiUrl || '';
+        parsedToken = decoded.token || decoded.secretToken || '';
+      } else {
+        // Maybe directly a URL
+        parsedUrl = raw;
+      }
+
+      if (parsedUrl) apiUrlInput.value = parsedUrl;
+      if (parsedToken) secretTokenInput.value = parsedToken;
+
+      showStatus('✨ 配置码解析成功！已自动填充，正在为您自动保存并测试连接...', true);
+      saveBtn.click();
+      setTimeout(() => {
+        testBtn.click();
+      }, 500);
+    } catch (e) {
+      showStatus('❌ 配置码格式无法识别，请在网站中重新复制！', false);
+    }
+  });
 
   // Load current settings
   chrome.storage.sync.get(['flarenav_api_url', 'flarenav_secret_token'], (items) => {

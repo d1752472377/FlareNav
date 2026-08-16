@@ -38,6 +38,23 @@ export async function verifyAdminToken(token: string): Promise<boolean> {
   }
 }
 
+export async function fetchAuthStatus(): Promise<{ success: boolean; zeroTrust: boolean; userEmail: string | null; isAdmin: boolean }> {
+  try {
+    const res = await fetch('/api/auth/status', {
+      headers: getAuthHeaders(),
+    });
+    const data = await res.json();
+    return data;
+  } catch (err) {
+    return {
+      success: false,
+      zeroTrust: false,
+      userEmail: null,
+      isAdmin: false,
+    };
+  }
+}
+
 export async function fetchCategories(): Promise<Category[]> {
   try {
     const res = await fetch('/api/categories');

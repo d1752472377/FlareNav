@@ -6,12 +6,13 @@
 interface Env {
   DB: any; // Cloudflare D1 Database binding
   ADMIN_SECRET_KEY?: string;
+  ADMIN_EMAIL?: string; // Optional Zero Trust email, e.g. "user@gmail.com"
 }
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Admin-Token',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Admin-Token, Cf-Access-Authenticated-User-Email, Cf-Access-Jwt-Assertion',
 };
 
 function jsonResponse(data: any, status = 200) {
@@ -29,6 +30,15 @@ function errorResponse(message: string, status = 400) {
 }
 
 function verifyAuth(request: Request, env: Env): boolean {
+  // 1. Cloudflare Zero Trust (Access) Email Check
+  const cfAccessEmail = request.headers.get('Cf-Access-Authenticated-User-Email');
+  if (cfAccessEmail) {
+    if (!env.ADMIN_EMAIL || cfAccessEmail.toLowerCase() === env.ADMIN_EMAIL.toLowerCase()) {
+      return true;
+    }
+  }
+
+  // 2. Token based auth
   const adminSecret = env.ADMIN_SECRET_KEY || 'admin123';
   const token = request.headers.get('X-Admin-Token') || request.headers.get('Authorization')?.replace('Bearer ', '');
   return token === adminSecret;
@@ -71,6 +81,27 @@ export const onRequest = async (context: { request: Request; env: Env; params: {
           totalClicks: totalClicks?.count || 0,
           topVisited: topVisited?.results || [],
         }
+      });
+    }
+
+    // -------------------------------------------------------------
+    // Route: GET /api/auth/status (Zero Trust & Admin status check)
+    // -------------------------------------------------------------
+    if (path === '/api/auth/status' && method === 'GET') {
+      const cfAccessEmail = request.headers.get('Cf-Access-Authenticated-User-Email');
+      const isZeroTrust = !!cfAccessEmail;
+      const adminEmail = env.ADMIN_EMAIL;
+      const isZeroTrustAdmin = isZeroTrust && (!adminEmail || cfAccessEmail.toLowerCase() === adminEmail.toLowerCase());
+      
+      const adminSecret = env.ADMIN_SECRET_KEY || 'admin123';
+      const token = request.headers.get('X-Admin-Token') || request.headers.get('Authorization')?.replace('Bearer ', '');
+      const isTokenAdmin = token === adminSecret;
+
+      return jsonResponse({
+        success: true,
+        zeroTrust: isZeroTrust,
+        userEmail: cfAccessEmail || null,
+        isAdmin: isZeroTrustAdmin || isTokenAdmin,
       });
     }
 

@@ -76,8 +76,18 @@ let bookmarks: Bookmark[] = [
 ];
 
 const ADMIN_KEY = process.env.ADMIN_SECRET_KEY || 'admin123';
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
 
 function checkAuth(req: express.Request): boolean {
+  // 1. Cloudflare Zero Trust header
+  const cfAccessEmail = req.headers['cf-access-authenticated-user-email'] as string;
+  if (cfAccessEmail) {
+    if (!ADMIN_EMAIL || cfAccessEmail.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+      return true;
+    }
+  }
+
+  // 2. Token header
   const token = req.headers['x-admin-token'] || req.headers.authorization?.replace('Bearer ', '');
   return token === ADMIN_KEY;
 }
@@ -88,6 +98,22 @@ function checkAuth(req: express.Request): boolean {
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', runtime: 'FlareNav-Local-D1-Simulator', time: new Date().toISOString() });
+});
+
+// Auth Status (Zero Trust + Token)
+app.get('/api/auth/status', (req, res) => {
+  const cfAccessEmail = req.headers['cf-access-authenticated-user-email'] as string;
+  const isZeroTrust = !!cfAccessEmail;
+  const isZeroTrustAdmin = isZeroTrust && (!ADMIN_EMAIL || cfAccessEmail.toLowerCase() === ADMIN_EMAIL.toLowerCase());
+  const token = req.headers['x-admin-token'] || req.headers.authorization?.replace('Bearer ', '');
+  const isTokenAdmin = token === ADMIN_KEY;
+
+  res.json({
+    success: true,
+    zeroTrust: isZeroTrust,
+    userEmail: cfAccessEmail || null,
+    isAdmin: isZeroTrustAdmin || isTokenAdmin,
+  });
 });
 
 // Stats API
