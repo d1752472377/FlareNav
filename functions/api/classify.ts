@@ -35,15 +35,22 @@ export const onRequestPost = async (context: { request: Request; env: Env }) => 
       ? categories.map((c: any) => `- ${c.name} (id: ${c.id})`).join('\n')
       : '- AI 工具 & 智能体 (id: cat_ai)\n- 开发与技术 (id: cat_dev)\n- 设计与灵感 (id: cat_design)\n- 云服务与部署 (id: cat_cloud)\n- 效率与日常 (id: cat_tools)\n- 阅读与资讯 (id: cat_read)';
 
-    const systemPrompt = `你是一个专业的网址智能分类与书签整理助手。根据提供的网站URL、网页标题和描述，从已有分类列表中挑选最匹配的一个分类ID，并生成2-3个中文标签和一句话中文功能摘要（不超过45字）。
+    const systemPrompt = `你是一个专业的网址智能分类与书签整理助手。根据提供的网站URL、网页标题和描述，评估其最适合归属的分类：
+1. 优先从已有分类列表中挑选最匹配的一个分类ID和名称。
+2. 若已有分类均明显不适合，可提议一个简明的新中文分类名称（2-6个字，如「影音娱乐」「金融理财」「游戏社区」等），并将 is_new_category 设为 true。
+3. 提取 2-3 个核心中文标签。
+4. 生成一句话中文功能摘要（不超过40字）。
 
 已有分类列表：
 ${availableCategories}
 
 请直接输出严格合法的 JSON 对象，不要包含 markdown 代码块标识（如 \`\`\`json 等）或任何多余的解释文字：
 {
-  "category_id": "分类ID",
-  "category_name": "分类名称",
+  "category_id": "已有分类ID（若提议新建则留空或填 new）",
+  "category_name": "分类名称（如 AI 工具 & 智能体、或新建分类名）",
+  "is_new_category": false,
+  "suggested_icon": "Sparkles",
+  "suggested_color": "#f59e0b",
   "suggested_tags": ["标签1", "标签2"],
   "summary": "一句话中文功能摘要",
   "reasoning": "简要分类依据"
@@ -74,13 +81,21 @@ ${availableCategories}
         const cleanJsonStr = responseText.replace(/```json/gi, '').replace(/```/g, '').trim();
         const parsed = JSON.parse(cleanJsonStr);
 
+        let finalCatName = parsed.category_name || '';
+        let matchedCat = categories.find((c: any) => c.id === parsed.category_id || (finalCatName && c.name.toLowerCase() === finalCatName.toLowerCase()));
+
+        const isNew = Boolean(parsed.is_new_category) || (!matchedCat && Boolean(finalCatName));
+
         return new Response(JSON.stringify({
           success: true,
-          category_id: parsed.category_id,
-          category_name: parsed.category_name,
-          suggested_tags: parsed.suggested_tags || [],
-          summary: parsed.summary || description || title,
-          reasoning: parsed.reasoning || '由 Cloudflare Workers AI 智能推断',
+          category_id: matchedCat ? matchedCat.id : '',
+          category_name: matchedCat ? matchedCat.name : (finalCatName || '效率与日常'),
+          is_new_category: isNew,
+          suggested_icon: parsed.suggested_icon || 'Folder',
+          suggested_color: parsed.suggested_color || '#f59e0b',
+          suggested_tags: Array.isArray(parsed.suggested_tags) ? parsed.suggested_tags : [],
+          summary: parsed.summary || description || title || '书签核心功能入口',
+          reasoning: parsed.reasoning || '由 Cloudflare Workers AI (@cf/glm-4.7-flash) 智能推断',
           model: '@cf/zai-org/glm-4.7-flash',
         }), {
           headers: { 'Content-Type': 'application/json', ...corsHeaders },
@@ -144,12 +159,16 @@ ${availableCategories}
     }
 
     // Match with actual existing user categories if available
-    const matchedCategory = categories.find((c: any) => c.id === matchedId || c.name === matchedName) || categories[0];
+    const matchedCategory = categories.find((c: any) => c.id === matchedId || c.name === matchedName);
+    const isNew = !matchedCategory;
 
     return new Response(JSON.stringify({
       success: true,
-      category_id: matchedCategory ? matchedCategory.id : matchedId,
+      category_id: matchedCategory ? matchedCategory.id : '',
       category_name: matchedCategory ? matchedCategory.name : matchedName,
+      is_new_category: isNew,
+      suggested_icon: 'Sparkles',
+      suggested_color: '#f59e0b',
       suggested_tags: tags,
       summary: description ? description.slice(0, 50) : `${title} 核心功能与使用入口`,
       reasoning: '根据网址域名与内容智能规则推断',

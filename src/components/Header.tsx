@@ -40,14 +40,11 @@ interface HeaderProps {
 }
 
 export const SEARCH_ENGINES: SearchEngine[] = [
-  { id: 'internal', name: '站内书签', icon: '⚡', placeholder: '搜索站内书签标题、网址或备注 (按 / 快捷聚焦)', urlTemplate: '' },
-  { id: 'ai', name: 'AI 语义检索', icon: '🤖', placeholder: '输入自然语言意图，如「写前端代码的工具」进行 AI 语义检索...', urlTemplate: '' },
-  { id: 'google', name: 'Google', icon: '🔍', placeholder: '使用 Google 搜索...', urlTemplate: 'https://www.google.com/search?q=' },
-  { id: 'bing', name: 'Bing', icon: '🎯', placeholder: '使用 Bing 搜索...', urlTemplate: 'https://www.bing.com/search?q=' },
-  { id: 'github', name: 'GitHub', icon: '🐱', placeholder: '在 GitHub 检索仓库与开源项目...', urlTemplate: 'https://github.com/search?q=' },
-  { id: 'duckduckgo', name: 'DuckDuckGo', icon: '🦆', placeholder: '使用 DuckDuckGo 隐私搜索...', urlTemplate: 'https://duckduckgo.com/?q=' },
-  { id: 'baidu', name: '百度', icon: '🇨🇳', placeholder: '在百度中搜索...', urlTemplate: 'https://www.baidu.com/s?wd=' },
-  { id: 'bilibili', name: 'B站', icon: '📺', placeholder: '在 B站 搜索视频与教程...', urlTemplate: 'https://search.bilibili.com/all?keyword=' },
+  { id: 'internal', name: '站内书签', icon: '⚡', placeholder: '搜索站内书签 (快捷键 /)', urlTemplate: '' },
+  { id: 'ai', name: 'AI 语义检索', icon: '🤖', placeholder: '自然语言 AI 意图检索 (如: 写代码的平台)...', urlTemplate: '' },
+  { id: 'google', name: 'Google', icon: '🔍', placeholder: '按回车或点击搜索前往 Google...', urlTemplate: 'https://www.google.com/search?q=' },
+  { id: 'baidu', name: '百度', icon: '🇨🇳', placeholder: '按回车或点击搜索前往百度...', urlTemplate: 'https://www.baidu.com/s?wd=' },
+  { id: 'github', name: 'GitHub', icon: '🐱', placeholder: '在 GitHub 检索开源项目...', urlTemplate: 'https://github.com/search?q=' },
 ];
 
 export const Header: React.FC<HeaderProps> = ({
@@ -183,90 +180,112 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* 2. Center: Sleek Unified Search Bar */}
           <div className="flex-1 max-w-2xl mx-auto min-w-0">
-            <form onSubmit={handleSearchSubmit} className="relative flex items-center">
-              {/* Engine Selector Pill */}
-              <div className="relative shrink-0" ref={engineMenuRef}>
-                <button
-                  type="button"
-                  onClick={() => setEngineMenuOpen(!engineMenuOpen)}
-                  className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-2 text-xs font-semibold rounded-l-xl border-y border-l transition ${engineBtnClass}`}
-                  title="切换搜索引擎"
-                >
-                  <span className="text-sm">{selectedEngine.icon}</span>
-                  <span className="hidden md:inline">{selectedEngine.name}</span>
-                  <ChevronDown size={12} className={isLight ? 'text-slate-500' : 'text-slate-400'} />
-                </button>
+            <form onSubmit={handleSearchSubmit} className="relative">
+              <div className={`flex items-center h-9 sm:h-10 rounded-xl border transition-all ${
+                isLight
+                  ? isSearchFocused
+                    ? 'bg-white border-amber-500 shadow-sm ring-2 ring-amber-500/10'
+                    : 'bg-slate-100/90 border-slate-200 hover:bg-slate-100 hover:border-slate-300'
+                  : isSearchFocused
+                    ? 'bg-slate-900 border-amber-500/60 shadow-lg ring-2 ring-amber-500/10'
+                    : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
+              }`}>
+                {/* Engine Selector Dropdown Button (Strictly flush) */}
+                <div className="relative h-full shrink-0 flex items-center" ref={engineMenuRef}>
+                  <button
+                    type="button"
+                    onClick={() => setEngineMenuOpen(!engineMenuOpen)}
+                    className={`h-full flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 text-xs font-semibold rounded-l-[11px] border-r transition ${
+                      isLight
+                        ? 'bg-slate-200/50 hover:bg-slate-200 text-slate-700 border-slate-200'
+                        : 'bg-slate-800/60 hover:bg-slate-800 text-slate-200 border-slate-800'
+                    }`}
+                    title="切换搜索引擎"
+                  >
+                    <span className="text-sm leading-none">{selectedEngine.icon}</span>
+                    <span className="hidden md:inline leading-none">{selectedEngine.name}</span>
+                    <ChevronDown size={11} className={isLight ? 'text-slate-400' : 'text-slate-400'} />
+                  </button>
 
-                {engineMenuOpen && (
-                  <div className={`absolute left-0 top-full mt-1.5 w-44 rounded-xl shadow-2xl z-50 py-1 overflow-hidden backdrop-blur-md animate-in fade-in zoom-in-95 duration-150 border ${isLight ? 'bg-white border-slate-200' : 'bg-slate-900 border-slate-700'}`}>
-                    <div className={`px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider border-b ${isLight ? 'text-slate-500 border-slate-100' : 'text-slate-400 border-slate-800'}`}>
-                      切换搜索引擎
+                  {engineMenuOpen && (
+                    <div className={`absolute left-0 top-full mt-1.5 w-44 rounded-xl shadow-2xl z-50 py-1 overflow-hidden backdrop-blur-md animate-in fade-in zoom-in-95 duration-150 border ${isLight ? 'bg-white border-slate-200' : 'bg-slate-900 border-slate-700'}`}>
+                      <div className={`px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider border-b ${isLight ? 'text-slate-400 border-slate-100' : 'text-slate-400 border-slate-800'}`}>
+                        选择检索模式
+                      </div>
+                      {SEARCH_ENGINES.map((engine) => (
+                        <button
+                          key={engine.id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedEngine(engine);
+                            setEngineMenuOpen(false);
+                            inputRef.current?.focus();
+                          }}
+                          className={`w-full flex items-center gap-2 px-3 py-2 text-xs text-left transition ${
+                            selectedEngine.id === engine.id
+                              ? isLight ? 'bg-amber-50 text-amber-700 font-semibold' : 'bg-amber-500/15 text-amber-300 font-medium'
+                              : isLight ? 'text-slate-700 hover:bg-slate-50' : 'text-slate-300 hover:bg-slate-800 hover:text-slate-100'
+                          }`}
+                        >
+                          <span className="text-sm">{engine.icon}</span>
+                          <span className="flex-1">{engine.name}</span>
+                          {engine.urlTemplate && (
+                            <ExternalLink size={11} className="opacity-40" />
+                          )}
+                        </button>
+                      ))}
                     </div>
-                    {SEARCH_ENGINES.map((engine) => (
-                      <button
-                        key={engine.id}
-                        type="button"
-                        onClick={() => {
-                          setSelectedEngine(engine);
-                          setEngineMenuOpen(false);
-                          inputRef.current?.focus();
-                        }}
-                        className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs text-left transition ${
-                          selectedEngine.id === engine.id
-                            ? isLight ? 'bg-amber-50 text-amber-700 font-semibold' : 'bg-amber-500/15 text-amber-300 font-medium'
-                            : isLight ? 'text-slate-700 hover:bg-slate-50' : 'text-slate-300 hover:bg-slate-800 hover:text-slate-100'
-                        }`}
-                      >
-                        <span className="text-base">{engine.icon}</span>
-                        <span>{engine.name}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Main Search Input */}
-              <div className="relative flex-1 min-w-0">
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={searchQuery}
-                  onFocus={() => setIsSearchFocused(true)}
-                  onBlur={() => setIsSearchFocused(false)}
-                  onChange={(e) => onSearchChange(e.target.value)}
-                  placeholder={selectedEngine.placeholder}
-                  className={`w-full border-y px-3 py-2 text-xs sm:text-sm focus:outline-none transition ${searchInputClass}`}
-                />
-                
-                {/* Keyboard hotkey hint or clear button */}
-                <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
-                  {searchQuery ? (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        onSearchChange('');
-                        inputRef.current?.focus();
-                      }}
-                      className={`${isLight ? 'text-slate-400 hover:text-slate-700' : 'text-slate-400 hover:text-slate-200'} p-0.5`}
-                    >
-                      <X size={14} />
-                    </button>
-                  ) : (
-                    <kbd className={`hidden lg:inline-block px-1.5 py-0.5 text-[10px] font-mono rounded shadow-xs ${isLight ? 'text-slate-500 bg-slate-200 border border-slate-300' : 'text-slate-400 bg-slate-900 border border-slate-700'}`}>
-                      /
-                    </kbd>
                   )}
                 </div>
-              </div>
 
-              {/* Search Submit Button */}
-              <button
-                type="submit"
-                className="px-3 sm:px-3.5 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold rounded-r-xl border-y border-r border-amber-400 text-xs transition flex items-center gap-1 shrink-0 shadow-md shadow-amber-500/10"
-              >
-                <Search size={14} className="stroke-[2.5]" />
-                <span className="hidden sm:inline">搜索</span>
-              </button>
+                {/* Main Search Input */}
+                <div className="relative flex-1 h-full min-w-0 flex items-center">
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    value={searchQuery}
+                    onFocus={() => setIsSearchFocused(true)}
+                    onBlur={() => setIsSearchFocused(false)}
+                    onChange={(e) => onSearchChange(e.target.value)}
+                    placeholder={selectedEngine.placeholder}
+                    className={`w-full h-full px-2.5 sm:px-3 text-xs sm:text-sm bg-transparent focus:outline-none transition ${
+                      isLight
+                        ? 'text-slate-900 placeholder:text-slate-400'
+                        : 'text-slate-100 placeholder:text-slate-400'
+                    }`}
+                  />
+                  
+                  {/* Keyboard hotkey hint or clear button */}
+                  <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                    {searchQuery ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onSearchChange('');
+                          inputRef.current?.focus();
+                        }}
+                        className={`p-1 rounded-md transition ${isLight ? 'text-slate-400 hover:text-slate-700 hover:bg-slate-200' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'}`}
+                      >
+                        <X size={13} />
+                      </button>
+                    ) : (
+                      <kbd className={`hidden lg:inline-block px-1.5 py-0.5 text-[10px] font-mono rounded ${isLight ? 'text-slate-400 bg-slate-200/80' : 'text-slate-400 bg-slate-800'}`}>
+                        /
+                      </kbd>
+                    )}
+                  </div>
+                </div>
+
+                {/* Search Submit Button */}
+                <button
+                  type="submit"
+                  className="h-full px-3 sm:px-3.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-r-[11px] text-xs transition flex items-center gap-1 shrink-0"
+                  title={selectedEngine.id === 'internal' ? '实时站内检索' : '前往检索'}
+                >
+                  <Search size={13} className="stroke-[2.5]" />
+                  <span className="hidden sm:inline">搜索</span>
+                </button>
+              </div>
             </form>
           </div>
 

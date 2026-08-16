@@ -368,6 +368,9 @@ app.post('/api/classify', (req, res) => {
   const combined = `${url || ''} ${title || ''} ${description || ''}`.toLowerCase();
   let matchedId = 'cat_tools';
   let matchedName = '效率与日常';
+  let isNew = false;
+  let suggestedIcon = 'Sparkles';
+  let suggestedColor = '#f59e0b';
   let tags = ['常用工具', '生产力'];
   let summary = description ? description.slice(0, 45) : `${title || '该网站'} 官方平台与常用入口`;
 
@@ -379,6 +382,8 @@ app.post('/api/classify', (req, res) => {
   ) {
     matchedId = 'cat_ai';
     matchedName = 'AI 工具 & 智能体';
+    suggestedIcon = 'Bot';
+    suggestedColor = '#8b5cf6';
     tags = ['AI大模型', '智能体', '生产力工具'];
     summary = `${title || '该平台'} 聚焦大语言模型与人工智能前沿应用`;
   } else if (
@@ -389,6 +394,8 @@ app.post('/api/classify', (req, res) => {
   ) {
     matchedId = 'cat_dev';
     matchedName = '开发与技术';
+    suggestedIcon = 'Code';
+    suggestedColor = '#3b82f6';
     tags = ['代码编程', '开源技术', '开发文档'];
     summary = `${title || '技术站点'} 提供现代软件开发与工程技术支持`;
   } else if (
@@ -399,6 +406,8 @@ app.post('/api/classify', (req, res) => {
   ) {
     matchedId = 'cat_design';
     matchedName = '设计与灵感';
+    suggestedIcon = 'Palette';
+    suggestedColor = '#ec4899';
     tags = ['UI/UX', '视觉设计', '灵感素材'];
     summary = `${title || '设计站点'} 汇聚优质视觉创意与界面设计资源`;
   } else if (
@@ -409,6 +418,8 @@ app.post('/api/classify', (req, res) => {
   ) {
     matchedId = 'cat_cloud';
     matchedName = '云服务与部署';
+    suggestedIcon = 'Cloud';
+    suggestedColor = '#06b6d4';
     tags = ['云原生', 'Serverless', '网络架构'];
     summary = `${title || '云服务平台'} 提供全球化基础设施与无服务器托管`;
   } else if (
@@ -419,20 +430,41 @@ app.post('/api/classify', (req, res) => {
   ) {
     matchedId = 'cat_read';
     matchedName = '阅读与资讯';
+    suggestedIcon = 'BookOpen';
+    suggestedColor = '#10b981';
     tags = ['深度阅读', '行业前沿', '极客资讯'];
     summary = `${title || '资讯媒体'} 汇集高质量科技与行业动态`;
+  } else if (
+    combined.includes('video') || combined.includes('movie') || combined.includes('music') ||
+    combined.includes('game') || combined.includes('bilibili') || combined.includes('youtube') ||
+    combined.includes('影音') || combined.includes('音乐') || combined.includes('游戏')
+  ) {
+    matchedId = 'cat_media';
+    matchedName = '影音与娱乐';
+    suggestedIcon = 'Tv';
+    suggestedColor = '#f43f5e';
+    tags = ['影音流媒体', '数字娱乐', '休闲'];
+    summary = `${title || '娱乐站点'} 汇集精彩影音流媒体与休闲内容`;
   }
 
   const categoryList = Array.isArray(customCategories) && customCategories.length > 0 ? customCategories : categories;
-  const targetCategory = categoryList.find((c: any) => c.id === matchedId || c.name === matchedName) || categoryList[0];
+  const targetCategory = categoryList.find((c: any) => c.id === matchedId || c.name === matchedName);
+
+  if (!targetCategory) {
+    // If not found in user's category list, flag it as a suggested new category
+    isNew = true;
+  }
 
   res.json({
     success: true,
-    category_id: targetCategory ? targetCategory.id : matchedId,
+    category_id: targetCategory ? targetCategory.id : '',
     category_name: targetCategory ? targetCategory.name : matchedName,
+    is_new_category: isNew,
+    suggested_icon: suggestedIcon,
+    suggested_color: suggestedColor,
     suggested_tags: tags,
     summary,
-    reasoning: `由 Cloudflare Workers AI (@cf/zai-org/glm-4.7-flash) 智能匹配`,
+    reasoning: `由 Cloudflare Workers AI (@cf/zai-org/glm-4.7-flash) 智能推断`,
     model: '@cf/zai-org/glm-4.7-flash'
   });
 });

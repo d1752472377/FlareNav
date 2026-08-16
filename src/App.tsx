@@ -40,6 +40,10 @@ import {
   ShieldCheck,
   Shield,
   FolderSync,
+  Grid,
+  X,
+  ChevronRight,
+  SlidersHorizontal,
 } from 'lucide-react';
 
 export default function App() {
@@ -423,6 +427,9 @@ export default function App() {
         }}
         onSave={handleSaveBookmark}
         categories={categories}
+        onCategoryCreated={(newCat) => {
+          setCategories((prev) => [...prev, newCat]);
+        }}
         initialData={editingBookmark}
         defaultCategoryId={activeCategoryId}
         theme={theme}

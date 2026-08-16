@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { X, Sparkles, Globe, Link, Tag, FileText, Check, AlertCircle, Star, Shield, Bot, Wand2 } from 'lucide-react';
+import { X, Sparkles, Globe, Link, Tag, FileText, Check, AlertCircle, Star, Shield, Bot, Wand2, Plus, FolderPlus } from 'lucide-react';
 import { Bookmark, Category, ThemeMode } from '../types';
-import { scrapeUrlMeta, classifyBookmarkAI, AIClassifyResult } from '../services/api';
+import { scrapeUrlMeta, classifyBookmarkAI, AIClassifyResult, createCategory } from '../services/api';
 
 interface BookmarkModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (data: Partial<Bookmark>) => Promise<void>;
   categories: Category[];
+  onCategoryCreated?: (cat: Category) => void;
   initialData?: Bookmark | null;
   defaultCategoryId?: string;
   theme?: ThemeMode;
@@ -18,6 +19,7 @@ export const BookmarkModal: React.FC<BookmarkModalProps> = ({
   onClose,
   onSave,
   categories,
+  onCategoryCreated,
   initialData,
   defaultCategoryId,
   theme = 'dark',
@@ -37,6 +39,11 @@ export const BookmarkModal: React.FC<BookmarkModalProps> = ({
   const [errorMsg, setErrorMsg] = useState('');
   const [scrapeSuccess, setScrapeSuccess] = useState(false);
   const [aiResult, setAiResult] = useState<AIClassifyResult | null>(null);
+
+  // Quick inline category creation state
+  const [showNewCatInput, setShowNewCatInput] = useState(false);
+  const [newCatName, setNewCatName] = useState('');
+  const [isCreatingCat, setIsCreatingCat] = useState(false);
 
   useEffect(() => {
     if (initialData) {
@@ -67,6 +74,8 @@ export const BookmarkModal: React.FC<BookmarkModalProps> = ({
       setSortOrder(0);
       setAiResult(null);
     }
+    setShowNewCatInput(false);
+    setNewCatName('');
     setErrorMsg('');
     setScrapeSuccess(false);
   }, [initialData, defaultCategoryId, categories, isOpen]);
@@ -87,13 +96,15 @@ export const BookmarkModal: React.FC<BookmarkModalProps> = ({
         categories,
       });
       setAiResult(res);
+
+      // Match category
       if (res.category_id) {
-        // Automatically select AI suggested category if present in categories
-        const matched = categories.find((c) => c.id === res.category_id || c.name === res.category_name);
+        const matched = categories.find((c) => c.id === res.category_id || (res.category_name && c.name.toLowerCase() === res.category_name.toLowerCase()));
         if (matched) {
           setCategoryId(matched.id);
         }
       }
+
       // If description was empty, fill with AI summary
       if (!description.trim() && res.summary) {
         setDescription(res.summary);
@@ -102,6 +113,30 @@ export const BookmarkModal: React.FC<BookmarkModalProps> = ({
       console.warn('AI classification error:', e);
     } finally {
       setIsClassifying(false);
+    }
+  };
+
+  const handleCreateCategoryInline = async (catName: string, icon = 'Sparkles', color = '#f59e0b') => {
+    const trimmed = catName.trim();
+    if (!trimmed) return;
+    setIsCreatingCat(true);
+    try {
+      const newCat = await createCategory({
+        name: trimmed,
+        icon,
+        color,
+        sort_order: categories.length + 1,
+      });
+      if (onCategoryCreated) {
+        onCategoryCreated(newCat);
+      }
+      setCategoryId(newCat.id);
+      setShowNewCatInput(false);
+      setNewCatName('');
+    } catch (err: any) {
+      setErrorMsg('创建分类失败: ' + err.message);
+    } finally {
+      setIsCreatingCat(false);
     }
   };
 
@@ -235,6 +270,10 @@ export const BookmarkModal: React.FC<BookmarkModalProps> = ({
   const footerBg = isLight ? 'bg-slate-50/50 border-slate-200' : 'border-slate-800';
   const cancelBtnClass = isLight ? 'bg-slate-100 hover:bg-slate-200 text-slate-700' : 'bg-slate-800 hover:bg-slate-700 text-slate-300';
 
+  // Check if AI suggested category currently exists
+  const aiCatName = aiResult?.category_name || '';
+  const isAiCatExisting = Boolean(aiCatName && categories.some((c) => c.id === aiResult?.category_id || c.name.toLowerCase() === aiCatName.toLowerCase()));
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-sm animate-fadeIn">
       <div className={`w-full max-w-lg border rounded-2xl overflow-hidden flex flex-col max-h-[92vh] ${modalBg}`}>
@@ -330,14 +369,40 @@ export const BookmarkModal: React.FC<BookmarkModalProps> = ({
                   <Bot size={14} className="text-amber-500" />
                   <span>Cloudflare AI 智能推荐分类</span>
                 </div>
-                <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-700 dark:text-amber-300">
+                <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-700 dark:text-amber-300 font-semibold">
                   @cf/glm-4.7-flash
                 </span>
               </div>
-              <div className="text-[11px] leading-relaxed">
-                推荐放入：<strong className="text-amber-600 dark:text-amber-400">【{aiResult.category_name}】</strong>
+
+              <div className="text-[11px] leading-relaxed flex flex-wrap items-center gap-1.5">
+                <span>推荐归类：</span>
+                <strong className="text-amber-600 dark:text-amber-400 font-bold">
+                  【{aiCatName || '效率与日常'}】
+                </strong>
                 {aiResult.reasoning && <span className="opacity-80"> — {aiResult.reasoning}</span>}
               </div>
+
+              {/* If suggested category doesn't exist yet, provide 1-click creation */}
+              {!isAiCatExisting && aiCatName && (
+                <div className={`p-2 rounded-lg border flex items-center justify-between gap-2 mt-1 ${
+                  isLight ? 'bg-white border-amber-300 text-slate-800' : 'bg-slate-800/90 border-amber-500/30 text-slate-200'
+                }`}>
+                  <div className="flex items-center gap-1.5 text-[11px]">
+                    <Sparkles size={13} className="text-amber-500" />
+                    <span>分类「{aiCatName}」尚未建立，是否立即创建？</span>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={isCreatingCat}
+                    onClick={() => handleCreateCategoryInline(aiCatName, aiResult.suggested_icon, aiResult.suggested_color)}
+                    className="px-2.5 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-[11px] rounded-md transition shadow-xs flex items-center gap-1 shrink-0"
+                  >
+                    <Plus size={12} className="stroke-[3]" />
+                    <span>{isCreatingCat ? '创建中...' : '一键创建并选中'}</span>
+                  </button>
+                </div>
+              )}
+
               {aiResult.suggested_tags && aiResult.suggested_tags.length > 0 && (
                 <div className="flex flex-wrap items-center gap-1 pt-1">
                   <span className="text-[10px] opacity-70">点击标签加入描述:</span>
@@ -360,25 +425,61 @@ export const BookmarkModal: React.FC<BookmarkModalProps> = ({
             </div>
           )}
 
-          {/* Category Selector with AI Manual trigger */}
+          {/* Category Selector with AI Manual trigger & Quick Add */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <label className={`text-xs ${labelColor}`}>
                 所属分类 *
               </label>
-              <button
-                type="button"
-                onClick={handleManualAIClassify}
-                disabled={isClassifying || (!url.trim() && !title.trim())}
-                className={`text-[11px] font-medium flex items-center gap-1 transition ${
-                  isLight ? 'text-amber-700 hover:text-amber-800' : 'text-amber-400 hover:text-amber-300'
-                } disabled:opacity-40`}
-                title="重新调用 Cloudflare AI 推断最佳分类"
-              >
-                <Wand2 size={12} className={isClassifying ? 'animate-spin' : ''} />
-                <span>{isClassifying ? '推断中...' : 'AI 智能分类'}</span>
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowNewCatInput(!showNewCatInput)}
+                  className={`text-[11px] font-medium flex items-center gap-1 transition ${
+                    isLight ? 'text-amber-700 hover:text-amber-800' : 'text-amber-400 hover:text-amber-300'
+                  }`}
+                >
+                  <FolderPlus size={12} />
+                  <span>{showNewCatInput ? '收起' : '+ 新分类'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleManualAIClassify}
+                  disabled={isClassifying || (!url.trim() && !title.trim())}
+                  className={`text-[11px] font-medium flex items-center gap-1 transition ${
+                    isLight ? 'text-amber-700 hover:text-amber-800' : 'text-amber-400 hover:text-amber-300'
+                  } disabled:opacity-40`}
+                  title="重新调用 Cloudflare AI 推断最佳分类"
+                >
+                  <Wand2 size={12} className={isClassifying ? 'animate-spin' : ''} />
+                  <span>{isClassifying ? '推断中...' : 'AI 智能推断'}</span>
+                </button>
+              </div>
             </div>
+
+            {/* Inline New Category Creation Input */}
+            {showNewCatInput && (
+              <div className={`p-2.5 rounded-xl border flex items-center gap-2 mb-2 ${
+                isLight ? 'bg-amber-50/60 border-amber-200' : 'bg-slate-800/80 border-slate-700'
+              }`}>
+                <input
+                  type="text"
+                  placeholder="输入新分类名称 (如：AI 写作、工具箱)"
+                  value={newCatName}
+                  onChange={(e) => setNewCatName(e.target.value)}
+                  className={`flex-1 rounded-lg px-2.5 py-1.5 text-xs border focus:outline-none transition ${inputBg}`}
+                />
+                <button
+                  type="button"
+                  disabled={isCreatingCat || !newCatName.trim()}
+                  onClick={() => handleCreateCategoryInline(newCatName)}
+                  className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 disabled:opacity-40 text-slate-950 font-bold text-xs rounded-lg transition shrink-0"
+                >
+                  {isCreatingCat ? '创建中...' : '确定创建'}
+                </button>
+              </div>
+            )}
+
             <select
               value={categoryId}
               onChange={(e) => setCategoryId(e.target.value)}
@@ -390,9 +491,6 @@ export const BookmarkModal: React.FC<BookmarkModalProps> = ({
                 </option>
               ))}
             </select>
-            <p className={`text-[10px] ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
-              AI 自动推断后您仍可随时手动更改上方分类。
-            </p>
           </div>
 
           {/* Description */}

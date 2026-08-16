@@ -229,6 +229,9 @@ export interface AIClassifyResult {
   success: boolean;
   category_id: string;
   category_name: string;
+  is_new_category?: boolean;
+  suggested_icon?: string;
+  suggested_color?: string;
   suggested_tags: string[];
   summary: string;
   reasoning?: string;
@@ -241,9 +244,16 @@ export async function classifyBookmarkAI(payload: {
   description?: string;
   categories?: Category[];
 }): Promise<AIClassifyResult> {
+  const token = getStoredAdminToken();
+  const headers: HeadersInit = { 'Content-Type': 'application/json' };
+  if (token) {
+    headers['X-Admin-Token'] = token;
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
   const res = await fetch('/api/classify', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify(payload),
   });
   const json = await res.json();

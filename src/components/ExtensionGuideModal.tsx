@@ -90,12 +90,24 @@ export const ExtensionGuideModal: React.FC<ExtensionGuideModalProps> = ({
           <div class="subtitle" id="statusText">正在连接...</div>
         </div>
       </div>
-      <a href="options.html" target="_blank" class="settings-btn" title="配置服务器与密钥">⚙️</a>
+      <div class="header-actions">
+        <button id="aiRerunBtn" class="ai-icon-btn" title="重新调用 AI 智能推断分类与摘要">✨</button>
+        <a href="options.html" target="_blank" class="settings-btn" title="配置服务器与密钥">⚙️</a>
+      </div>
     </header>
 
     <div id="unconfiguredAlert" class="alert-box hidden">
       <p>⚠️ 尚未配置 FlareNav 服务器地址</p>
       <button id="openOptionsBtn" class="btn btn-secondary btn-sm">前往设置</button>
+    </div>
+
+    <!-- AI Suggestion Banner -->
+    <div id="aiBanner" class="ai-banner hidden">
+      <div class="ai-banner-header">
+        <span class="ai-sparkle">🤖</span>
+        <span class="ai-title">Cloudflare Workers AI 智能推荐</span>
+      </div>
+      <div id="aiSuggestionText" class="ai-suggestion-text">正在分析网页分类...</div>
     </div>
 
     <form id="bookmarkForm" class="form">
@@ -113,7 +125,10 @@ export const ExtensionGuideModal: React.FC<ExtensionGuideModalProps> = ({
       </div>
 
       <div class="form-group">
-        <label for="category">所属分类</label>
+        <div class="label-row">
+          <label for="category">所属分类</label>
+          <span id="aiCatBadge" class="ai-badge hidden">AI 智能匹配</span>
+        </div>
         <div class="select-wrapper">
           <select id="category" required>
             <option value="" disabled selected>加载分类中...</option>
@@ -122,8 +137,12 @@ export const ExtensionGuideModal: React.FC<ExtensionGuideModalProps> = ({
       </div>
 
       <div class="form-group">
-        <label for="description">简要备注 / 描述</label>
-        <textarea id="description" rows="2" placeholder="可在此输入页面摘要或个人备注（选填）"></textarea>
+        <div class="label-row">
+          <label for="description">简要备注 / AI 功能摘要</label>
+        </div>
+        <textarea id="description" rows="2" placeholder="可在此输入页面摘要或由 AI 自动生成"></textarea>
+        <!-- AI Suggested Tags -->
+        <div id="aiTagsContainer" class="ai-tags-row hidden"></div>
       </div>
 
       <div class="custom-toggle-row">
@@ -166,25 +185,34 @@ export const ExtensionGuideModal: React.FC<ExtensionGuideModalProps> = ({
 
       const popupCss = `* { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
 body { width: 360px; background-color: #0f172a; color: #f8fafc; font-size: 13px; }
-.popup-container { padding: 14px; display: flex; flex-direction: column; gap: 12px; }
-.header { display: flex; align-items: center; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid #334155; }
+.popup-container { padding: 14px; display: flex; flex-direction: column; gap: 11px; }
+.header { display: flex; align-items: center; justify-content: space-between; padding-bottom: 9px; border-bottom: 1px solid #334155; }
 .brand { display: flex; align-items: center; gap: 8px; }
 .logo-badge { width: 28px; height: 28px; background: linear-gradient(135deg, #f59e0b, #ea580c); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; }
 .title { font-size: 14px; font-weight: 700; color: #f8fafc; }
 .subtitle { font-size: 11px; color: #94a3b8; }
-.settings-btn { text-decoration: none; font-size: 16px; padding: 4px 6px; border-radius: 6px; cursor: pointer; }
-.settings-btn:hover { background: #334155; }
+.header-actions { display: flex; align-items: center; gap: 4px; }
+.ai-icon-btn, .settings-btn { background: none; border: none; font-size: 15px; padding: 4px 6px; border-radius: 6px; cursor: pointer; color: #f8fafc; text-decoration: none; }
+.ai-icon-btn:hover, .settings-btn:hover { background: #334155; }
 .alert-box { background: #451a03; border: 1px solid #b45309; border-radius: 8px; padding: 10px; display: flex; flex-direction: column; gap: 6px; color: #fde68a; font-size: 12px; }
-.form { display: flex; flex-direction: column; gap: 10px; }
+.ai-banner { background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(234, 88, 12, 0.1)); border: 1px solid rgba(245, 158, 11, 0.35); border-radius: 8px; padding: 8px 10px; font-size: 11px; }
+.ai-banner-header { display: flex; align-items: center; gap: 5px; font-weight: 700; color: #fbbf24; margin-bottom: 3px; }
+.ai-suggestion-text { color: #cbd5e1; line-height: 1.4; }
+.form { display: flex; flex-direction: column; gap: 9px; }
 .form-group { display: flex; flex-direction: column; gap: 4px; }
+.label-row { display: flex; align-items: center; justify-content: space-between; }
 .form-group label { font-size: 11px; font-weight: 600; color: #94a3b8; }
-input[type="text"], input[type="url"], textarea, select { width: 100%; background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 8px 10px; color: #f8fafc; font-size: 12px; outline: none; }
+.ai-badge { font-size: 10px; background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); padding: 1px 5px; border-radius: 4px; font-weight: 600; }
+input[type="text"], input[type="url"], textarea, select { width: 100%; background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 7px 10px; color: #f8fafc; font-size: 12px; outline: none; }
 input:focus, textarea:focus, select:focus { border-color: #f59e0b; background: #1e293b; }
 .input-with-icon { position: relative; display: flex; align-items: center; }
 .input-with-icon input { padding-left: 30px; }
 .favicon-preview { position: absolute; left: 8px; width: 16px; height: 16px; border-radius: 4px; object-fit: contain; }
-.custom-toggle-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 2px; }
-.custom-toggle-btn { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; background: #1e293b; border: 1px solid #334155; border-radius: 8px; color: #94a3b8; font-size: 11px; font-weight: 600; cursor: pointer; user-select: none; }
+.ai-tags-row { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 3px; }
+.ai-tag-chip { font-size: 10px; background: #334155; color: #cbd5e1; padding: 2px 6px; border-radius: 4px; cursor: pointer; border: 1px solid transparent; }
+.ai-tag-chip:hover { border-color: #f59e0b; color: #f59e0b; }
+.custom-toggle-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 1px; }
+.custom-toggle-btn { display: flex; align-items: center; justify-content: space-between; padding: 7px 10px; background: #1e293b; border: 1px solid #334155; border-radius: 8px; color: #94a3b8; font-size: 11px; font-weight: 600; cursor: pointer; user-select: none; }
 .toggle-left { display: flex; align-items: center; gap: 5px; }
 .toggle-box { width: 14px; height: 14px; border-radius: 4px; border: 1.5px solid #475569; display: flex; align-items: center; justify-content: center; background: #0f172a; }
 .custom-toggle-btn.active-pinned { background: rgba(245, 158, 11, 0.12); border-color: #f59e0b; color: #fbbf24; }
@@ -201,10 +229,10 @@ input:focus, textarea:focus, select:focus { border-color: #f59e0b; background: #
 .result-msg { padding: 8px; border-radius: 8px; font-size: 12px; text-align: center; }
 .result-msg.success { background: #064e3b; color: #6ee7b7; border: 1px solid #059669; }
 .result-msg.error { background: #7f1d1d; color: #fca5a5; border: 1px solid #dc2626; }
-.quick-search-section { border-top: 1px solid #334155; padding-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+.quick-search-section { border-top: 1px solid #334155; padding-top: 9px; display: flex; flex-direction: column; gap: 5px; }
 .section-title { font-size: 11px; font-weight: 600; color: #94a3b8; }
-.quick-results-list { max-height: 120px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
-.quick-result-item { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 6px; background: #1e293b; color: #e2e8f0; text-decoration: none; font-size: 12px; }
+.quick-results-list { max-height: 110px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+.quick-result-item { display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 6px; background: #1e293b; color: #e2e8f0; text-decoration: none; font-size: 12px; }
 .quick-result-item:hover { background: #334155; color: #f59e0b; }
 .quick-result-item img { width: 14px; height: 14px; border-radius: 3px; }
 .quick-result-item .item-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
@@ -230,9 +258,15 @@ input:focus, textarea:focus, select:focus { border-color: #f59e0b; background: #
   const openOptionsBtn = document.getElementById('openOptionsBtn');
   const quickSearchInput = document.getElementById('quickSearchInput');
   const quickSearchResults = document.getElementById('quickSearchResults');
+  const aiBanner = document.getElementById('aiBanner');
+  const aiSuggestionText = document.getElementById('aiSuggestionText');
+  const aiCatBadge = document.getElementById('aiCatBadge');
+  const aiTagsContainer = document.getElementById('aiTagsContainer');
+  const aiRerunBtn = document.getElementById('aiRerunBtn');
 
   let currentIconUrl = '';
   let config = { apiUrl: '', secretToken: '' };
+  let cachedCategories = [];
   let isPinned = false;
   let isPrivate = false;
 
@@ -255,6 +289,10 @@ input:focus, textarea:focus, select:focus { border-color: #f59e0b; background: #
     else window.open(chrome.runtime.getURL('options.html'));
   });
 
+  aiRerunBtn?.addEventListener('click', () => {
+    runAIClassification();
+  });
+
   chrome.storage.sync.get(['flarenav_api_url', 'flarenav_secret_token'], async (items) => {
     config.apiUrl = (items.flarenav_api_url || '').trim().replace(/\\/+$/, '');
     config.secretToken = (items.flarenav_secret_token || '').trim();
@@ -271,6 +309,9 @@ input:focus, textarea:focus, select:focus { border-color: #f59e0b; background: #
     statusText.style.color = '#10b981';
     unconfiguredAlert.classList.add('hidden');
     await fetchCategories();
+
+    // Auto trigger AI classification once categories and page metadata are ready
+    runAIClassification();
   });
 
   if (chrome.tabs) {
@@ -295,24 +336,103 @@ input:focus, textarea:focus, select:focus { border-color: #f59e0b; background: #
   }
 
   function loadFallbackCategories() {
-    categorySelect.innerHTML = '<option value="cat_ai">AI 工具 & 智能体</option><option value="cat_dev" selected>开发与技术</option><option value="cat_design">设计与灵感</option><option value="cat_tools">效率与日常</option>';
+    cachedCategories = [
+      { id: 'cat_ai', name: 'AI 工具 & 智能体' },
+      { id: 'cat_dev', name: '开发与技术' },
+      { id: 'cat_design', name: '设计与灵感' },
+      { id: 'cat_tools', name: '效率与日常' }
+    ];
+    renderCategoryOptions(cachedCategories);
+  }
+
+  function renderCategoryOptions(categories) {
+    categorySelect.innerHTML = '';
+    categories.forEach((cat) => {
+      const opt = document.createElement('option');
+      opt.value = cat.id;
+      opt.textContent = cat.name;
+      categorySelect.appendChild(opt);
+    });
   }
 
   async function fetchCategories() {
     try {
       const resp = await fetch(config.apiUrl + '/api/categories');
       const data = await resp.json();
-      if (data.success && data.data) {
-        categorySelect.innerHTML = '';
-        data.data.forEach((cat) => {
-          const opt = document.createElement('option');
-          opt.value = cat.id;
-          opt.textContent = cat.name;
-          categorySelect.appendChild(opt);
-        });
+      if (data.success && data.data && data.data.length > 0) {
+        cachedCategories = data.data;
+        renderCategoryOptions(cachedCategories);
       } else loadFallbackCategories();
     } catch (err) {
       loadFallbackCategories();
+    }
+  }
+
+  async function runAIClassification() {
+    const url = urlInput.value.trim();
+    const title = titleInput.value.trim();
+    if (!url || !config.apiUrl) return;
+
+    aiBanner.classList.remove('hidden');
+    aiSuggestionText.textContent = '✨ Cloudflare AI (@cf/glm-4.7-flash) 正在分析推荐分类与功能摘要...';
+
+    try {
+      const resp = await fetch(config.apiUrl + '/api/classify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Admin-Token': config.secretToken,
+          'Authorization': 'Bearer ' + config.secretToken
+        },
+        body: JSON.stringify({
+          url,
+          title,
+          description: descInput.value.trim(),
+          categories: cachedCategories
+        })
+      });
+
+      const res = await resp.json();
+      if (resp.ok && res.success) {
+        const catName = res.category_name || '智能推荐';
+        aiSuggestionText.innerHTML = '推荐放入：<strong>【' + catName + '】</strong><br><span style="color:#94a3b8; font-size:10px;">' + (res.summary || res.reasoning || '') + '</span>';
+        aiCatBadge.classList.remove('hidden');
+
+        // Check if category exists or needs new option
+        let matchedOption = Array.from(categorySelect.options).find(o => o.value === res.category_id || o.textContent === catName);
+        if (matchedOption) {
+          categorySelect.value = matchedOption.value;
+        } else if (res.category_id) {
+          const newOpt = document.createElement('option');
+          newOpt.value = res.category_id;
+          newOpt.textContent = '✨ ' + catName;
+          categorySelect.appendChild(newOpt);
+          categorySelect.value = res.category_id;
+        }
+
+        // Fill description if empty
+        if (!descInput.value.trim() && res.summary) {
+          descInput.value = res.summary;
+        }
+
+        // Render suggested tags
+        if (res.suggested_tags && res.suggested_tags.length > 0) {
+          aiTagsContainer.classList.remove('hidden');
+          aiTagsContainer.innerHTML = res.suggested_tags.map(t => '<span class="ai-tag-chip" data-tag="' + t + '">+ ' + t + '</span>').join('');
+          aiTagsContainer.querySelectorAll('.ai-tag-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+              const tag = chip.dataset.tag;
+              if (!descInput.value.includes(tag)) {
+                descInput.value = (descInput.value + ' #' + tag).trim();
+              }
+            });
+          });
+        }
+      } else {
+        aiSuggestionText.textContent = 'AI 推断完成 (已匹配最适分类)';
+      }
+    } catch (e) {
+      aiBanner.classList.add('hidden');
     }
   }
 
@@ -328,7 +448,7 @@ input:focus, textarea:focus, select:focus { border-color: #f59e0b; background: #
       const payload = {
         title: titleInput.value.trim(),
         url: urlInput.value.trim(),
-        category_id: categorySelect.value,
+        category_id: categorySelect.value || 'cat_tools',
         description: descInput.value.trim(),
         icon_url: currentIconUrl,
         is_pinned: isPinned ? 1 : 0,
