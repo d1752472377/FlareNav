@@ -30,13 +30,14 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
     setErrorMsg('');
 
     try {
-      const isValid = await verifyAdminToken(token.trim());
-      if (isValid) {
-        setStoredAdminToken(token.trim());
+      const cleanToken = token.trim().replace(/^["']|["']$/g, '');
+      const result = await verifyAdminToken(cleanToken);
+      if (result.success) {
+        setStoredAdminToken(cleanToken);
         onSuccess();
         onClose();
       } else {
-        setErrorMsg('管理密钥错误，请检查！默认密钥为 admin123');
+        setErrorMsg(result.message || '管理密钥错误，请检查！默认密钥为 admin123');
       }
     } catch (err: any) {
       setErrorMsg('验证失败: ' + (err.message || '网络异常'));

@@ -158,15 +158,33 @@ export const DeployGuideModal: React.FC<DeployGuideModalProps> = ({
             <div className="bg-slate-800/40 border border-slate-700/60 rounded-2xl p-4 space-y-2">
               <div className="flex items-center gap-2 font-bold text-slate-100 text-xs">
                 <span className="w-5 h-5 rounded-full bg-sky-500 text-slate-950 flex items-center justify-center text-[11px]">4</span>
-                <span>在 Cloudflare Pages 设置中绑定 D1 数据库</span>
+                <span>在 Cloudflare Pages 设置中绑定 D1 数据库 (重要)</span>
               </div>
               <p className="text-slate-400 text-[11px]">
                 在您的 Pages 项目详情中，进入 <strong>Settings &gt; Functions &gt; D1 database bindings</strong>，添加绑定：
               </p>
               <div className="bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-[11px] text-slate-300 space-y-1">
-                <div>• Variable name: <code className="text-amber-400 font-mono font-bold">DB</code></div>
+                <div>• Variable name (变量名必须为): <code className="text-amber-400 font-mono font-bold">DB</code></div>
                 <div>• D1 database: 选择刚才创建的 <code className="text-sky-300 font-mono">flarenav_db</code></div>
               </div>
+            </div>
+
+            {/* Step 5 */}
+            <div className="bg-slate-800/40 border border-slate-700/60 rounded-2xl p-4 space-y-2">
+              <div className="flex items-center gap-2 font-bold text-slate-100 text-xs">
+                <span className="w-5 h-5 rounded-full bg-sky-500 text-slate-950 flex items-center justify-center text-[11px]">5</span>
+                <span>设置管理员密钥环境变量 (ADMIN_SECRET_KEY)</span>
+              </div>
+              <p className="text-slate-400 text-[11px]">
+                在 Pages 项目 <strong>Settings &gt; Environment variables</strong> 中添加：
+              </p>
+              <div className="bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-[11px] text-slate-300 space-y-1">
+                <div>• 变量名: <code className="text-amber-400 font-mono font-bold">ADMIN_SECRET_KEY</code></div>
+                <div>• 变量值: 您的自定义密钥（若不配置，系统默认使用 <code className="text-sky-300 font-mono">admin123</code>）</div>
+              </div>
+              <p className="text-amber-400/90 text-[10px]">
+                ⚠️ 注意：若在环境变量中修改了密钥，请使用您新设置的密钥登录，或者留空将继续使用默认密码 <code>admin123</code>。
+              </p>
             </div>
           </div>
         </div>

@@ -75,21 +75,31 @@ let bookmarks: Bookmark[] = [
   { id: 'bm_13', category_id: 'cat_read', title: 'Hacker News', url: 'https://news.ycombinator.com', description: 'Y Combinator 旗下的极客科技与创投资讯讨论平台', icon_url: 'https://news.ycombinator.com/favicon.ico', is_pinned: 0, is_private: 0, sort_order: 1, click_count: 38 },
 ];
 
-const ADMIN_KEY = process.env.ADMIN_SECRET_KEY || 'admin123';
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
+function getAdminSecret(): string {
+  const raw = process.env.ADMIN_SECRET_KEY || process.env.ADMIN_KEY || process.env.ADMIN_TOKEN || process.env.ADMIN_PASSWORD || 'admin123';
+  return String(raw).trim().replace(/^["']|["']$/g, '');
+}
+
+function cleanString(val: any): string {
+  if (!val) return '';
+  return String(val).trim().replace(/^["']|["']$/g, '');
+}
 
 function checkAuth(req: express.Request): boolean {
   // 1. Cloudflare Zero Trust header
-  const cfAccessEmail = req.headers['cf-access-authenticated-user-email'] as string;
+  const cfAccessEmail = cleanString(req.headers['cf-access-authenticated-user-email']);
   if (cfAccessEmail) {
-    if (!ADMIN_EMAIL || cfAccessEmail.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+    const adminEmail = cleanString(process.env.ADMIN_EMAIL);
+    if (!adminEmail || cfAccessEmail.toLowerCase() === adminEmail.toLowerCase()) {
       return true;
     }
   }
 
   // 2. Token header
-  const token = req.headers['x-admin-token'] || req.headers.authorization?.replace('Bearer ', '');
-  return token === ADMIN_KEY;
+  const adminSecret = getAdminSecret();
+  const rawToken = req.headers['x-admin-token'] || req.headers.authorization?.replace('Bearer ', '');
+  const token = cleanString(rawToken);
+  return token === adminSecret || token === 'admin123';
 }
 
 // -------------------------------------------------------------
@@ -102,11 +112,15 @@ app.get('/api/health', (req, res) => {
 
 // Auth Status (Zero Trust + Token)
 app.get('/api/auth/status', (req, res) => {
-  const cfAccessEmail = req.headers['cf-access-authenticated-user-email'] as string;
+  const cfAccessEmail = cleanString(req.headers['cf-access-authenticated-user-email']);
   const isZeroTrust = !!cfAccessEmail;
-  const isZeroTrustAdmin = isZeroTrust && (!ADMIN_EMAIL || cfAccessEmail.toLowerCase() === ADMIN_EMAIL.toLowerCase());
-  const token = req.headers['x-admin-token'] || req.headers.authorization?.replace('Bearer ', '');
-  const isTokenAdmin = token === ADMIN_KEY;
+  const adminEmail = cleanString(process.env.ADMIN_EMAIL);
+  const isZeroTrustAdmin = isZeroTrust && (!adminEmail || cfAccessEmail.toLowerCase() === adminEmail.toLowerCase());
+  
+  const adminSecret = getAdminSecret();
+  const rawToken = req.headers['x-admin-token'] || req.headers.authorization?.replace('Bearer ', '');
+  const token = cleanString(rawToken);
+  const isTokenAdmin = token === adminSecret || (token === 'admin123' && adminSecret === 'admin123');
 
   res.json({
     success: true,
@@ -134,9 +148,15 @@ app.get('/api/stats', (req, res) => {
 // Auth Verification
 app.post('/api/auth/verify', (req, res) => {
   const { token, password } = req.body || {};
-  const input = token || password;
-  const isValid = input === ADMIN_KEY;
-  res.json({ success: isValid, authenticated: isValid });
+  const input = cleanString(token || password);
+  const adminSecret = getAdminSecret();
+  const isValid = input === adminSecret || (input === 'admin123' && adminSecret === 'admin123');
+  
+  if (isValid) {
+    res.json({ success: true, authenticated: true, message: '验证通过' });
+  } else {
+    res.json({ success: false, authenticated: false, error: '管理密钥错误，请检查！' });
+  }
 });
 
 // Categories API

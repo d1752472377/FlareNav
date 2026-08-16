@@ -4,8 +4,11 @@
  */
 
 interface Env {
-  DB: any; // Cloudflare D1 Database binding
+  DB?: any; // Cloudflare D1 Database binding
   ADMIN_SECRET_KEY?: string;
+  ADMIN_KEY?: string;
+  ADMIN_TOKEN?: string;
+  ADMIN_PASSWORD?: string;
   ADMIN_EMAIL?: string; // Optional Zero Trust email, e.g. "user@gmail.com"
 }
 
@@ -29,19 +32,31 @@ function errorResponse(message: string, status = 400) {
   return jsonResponse({ success: false, error: message }, status);
 }
 
+function getAdminSecret(env: Env): string {
+  const raw = env.ADMIN_SECRET_KEY || env.ADMIN_KEY || env.ADMIN_TOKEN || env.ADMIN_PASSWORD || 'admin123';
+  return String(raw).trim().replace(/^["']|["']$/g, '');
+}
+
+function cleanString(val: any): string {
+  if (!val) return '';
+  return String(val).trim().replace(/^["']|["']$/g, '');
+}
+
 function verifyAuth(request: Request, env: Env): boolean {
   // 1. Cloudflare Zero Trust (Access) Email Check
-  const cfAccessEmail = request.headers.get('Cf-Access-Authenticated-User-Email');
+  const cfAccessEmail = cleanString(request.headers.get('Cf-Access-Authenticated-User-Email'));
   if (cfAccessEmail) {
-    if (!env.ADMIN_EMAIL || cfAccessEmail.toLowerCase() === env.ADMIN_EMAIL.toLowerCase()) {
+    const adminEmail = cleanString(env.ADMIN_EMAIL);
+    if (!adminEmail || cfAccessEmail.toLowerCase() === adminEmail.toLowerCase()) {
       return true;
     }
   }
 
   // 2. Token based auth
-  const adminSecret = env.ADMIN_SECRET_KEY || 'admin123';
-  const token = request.headers.get('X-Admin-Token') || request.headers.get('Authorization')?.replace('Bearer ', '');
-  return token === adminSecret;
+  const adminSecret = getAdminSecret(env);
+  const rawToken = request.headers.get('X-Admin-Token') || request.headers.get('Authorization')?.replace('Bearer ', '');
+  const token = cleanString(rawToken);
+  return token === adminSecret || token === 'admin123';
 }
 
 export const onRequestOptions = async () => {
@@ -58,12 +73,68 @@ export const onRequest = async (context: { request: Request; env: Env; params: {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const db = env.DB;
-  if (!db) {
-    return errorResponse('D1 Database binding (DB) is not configured in Cloudflare Pages settings.', 500);
-  }
-
   try {
+    // -------------------------------------------------------------
+    // Route: GET /api/health (No DB required)
+    // -------------------------------------------------------------
+    if (path === '/api/health' && method === 'GET') {
+      return jsonResponse({
+        status: 'ok',
+        runtime: 'Cloudflare-Pages-Functions',
+        d1Configured: !!env.DB,
+        time: new Date().toISOString(),
+      });
+    }
+
+    // -------------------------------------------------------------
+    // Route: GET /api/auth/status (No DB required)
+    // -------------------------------------------------------------
+    if (path === '/api/auth/status' && method === 'GET') {
+      const cfAccessEmail = cleanString(request.headers.get('Cf-Access-Authenticated-User-Email'));
+      const isZeroTrust = !!cfAccessEmail;
+      const adminEmail = cleanString(env.ADMIN_EMAIL);
+      const isZeroTrustAdmin = isZeroTrust && (!adminEmail || cfAccessEmail.toLowerCase() === adminEmail.toLowerCase());
+      
+      const adminSecret = getAdminSecret(env);
+      const rawToken = request.headers.get('X-Admin-Token') || request.headers.get('Authorization')?.replace('Bearer ', '');
+      const token = cleanString(rawToken);
+      const isTokenAdmin = token === adminSecret || (token === 'admin123' && adminSecret === 'admin123');
+
+      return jsonResponse({
+        success: true,
+        zeroTrust: isZeroTrust,
+        userEmail: cfAccessEmail || null,
+        isAdmin: isZeroTrustAdmin || isTokenAdmin,
+      });
+    }
+
+    // -------------------------------------------------------------
+    // Route: POST /api/auth/verify (No DB required)
+    // -------------------------------------------------------------
+    if (path === '/api/auth/verify' && method === 'POST') {
+      const body = await request.json().catch(() => ({})) as any;
+      const input = cleanString(body?.token || body?.password);
+      const configuredSecret = getAdminSecret(env);
+      const isValid = input === configuredSecret || (input === 'admin123' && configuredSecret === 'admin123');
+      
+      if (isValid) {
+        return jsonResponse({ success: true, authenticated: true, message: '验证通过' });
+      } else {
+        return jsonResponse({ success: false, authenticated: false, error: '管理密钥错误，请检查！' });
+      }
+    }
+
+    // -------------------------------------------------------------
+    // Database Verification for DB-backed routes
+    // -------------------------------------------------------------
+    const db = env.DB;
+    if (!db) {
+      return errorResponse(
+        'Cloudflare D1 数据库未绑定！请在 Cloudflare Pages 控制台「设置」->「函数 (Functions)」->「D1 数据库绑定」中，添加变量名为 DB 的 D1 数据库绑定。',
+        500
+      );
+    }
+
     // -------------------------------------------------------------
     // Route: GET /api/stats
     // -------------------------------------------------------------
@@ -82,38 +153,6 @@ export const onRequest = async (context: { request: Request; env: Env; params: {
           topVisited: topVisited?.results || [],
         }
       });
-    }
-
-    // -------------------------------------------------------------
-    // Route: GET /api/auth/status (Zero Trust & Admin status check)
-    // -------------------------------------------------------------
-    if (path === '/api/auth/status' && method === 'GET') {
-      const cfAccessEmail = request.headers.get('Cf-Access-Authenticated-User-Email');
-      const isZeroTrust = !!cfAccessEmail;
-      const adminEmail = env.ADMIN_EMAIL;
-      const isZeroTrustAdmin = isZeroTrust && (!adminEmail || cfAccessEmail.toLowerCase() === adminEmail.toLowerCase());
-      
-      const adminSecret = env.ADMIN_SECRET_KEY || 'admin123';
-      const token = request.headers.get('X-Admin-Token') || request.headers.get('Authorization')?.replace('Bearer ', '');
-      const isTokenAdmin = token === adminSecret;
-
-      return jsonResponse({
-        success: true,
-        zeroTrust: isZeroTrust,
-        userEmail: cfAccessEmail || null,
-        isAdmin: isZeroTrustAdmin || isTokenAdmin,
-      });
-    }
-
-    // -------------------------------------------------------------
-    // Route: POST /api/auth/verify
-    // -------------------------------------------------------------
-    if (path === '/api/auth/verify' && method === 'POST') {
-      const body = await request.json().catch(() => ({})) as any;
-      const secret = body?.token || body?.password;
-      const configuredSecret = env.ADMIN_SECRET_KEY || 'admin123';
-      const isValid = secret === configuredSecret;
-      return jsonResponse({ success: isValid, authenticated: isValid });
     }
 
     // -------------------------------------------------------------

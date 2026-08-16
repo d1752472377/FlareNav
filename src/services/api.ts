@@ -23,18 +23,38 @@ function getAuthHeaders(): HeadersInit {
   };
 }
 
-export async function verifyAdminToken(token: string): Promise<boolean> {
+export async function verifyAdminToken(token: string): Promise<{ success: boolean; message?: string }> {
+  const clean = token.trim().replace(/^["']|["']$/g, '');
   try {
     const res = await fetch('/api/auth/verify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token }),
+      body: JSON.stringify({ token: clean }),
     });
+    
+    if (!res.ok) {
+      const errData = await res.json().catch(() => null);
+      return {
+        success: false,
+        message: errData?.error || `服务器响应异常 (${res.status})，请检查 Cloudflare Pages 设置`,
+      };
+    }
+
     const data = await res.json();
-    return !!data.authenticated;
-  } catch (err) {
+    if (data.authenticated || data.success) {
+      return { success: true };
+    }
+    return {
+      success: false,
+      message: data.error || '管理密钥错误，请检查！默认密钥为 admin123',
+    };
+  } catch (err: any) {
     console.error('Failed to verify token:', err);
-    return token === 'admin123';
+    // Offline or pure local preview fallback
+    if (clean === 'admin123') {
+      return { success: true };
+    }
+    return { success: false, message: '网络异常或未能连接到服务器，已为您尝试本地密钥' };
   }
 }
 
