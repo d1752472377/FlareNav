@@ -112,7 +112,7 @@ export const DeployGuideModal: React.FC<DeployGuideModalProps> = ({
                 $ npx wrangler d1 create flarenav_db
               </div>
               <p className="text-slate-400 text-[11px]">
-                执行后命令行将输出 <code>database_id</code>（如 <code>xxxx-xxxx-xxxx</code>），将其填入项目根目录 <code>wrangler.toml</code> 中。
+                创建后推荐直接在 Cloudflare Pages 控制台绑定（第 4 步），无需修改 <code>wrangler.toml</code> 即可避免 UUID 格式报错。
               </p>
             </div>
 

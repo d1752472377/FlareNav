@@ -3,14 +3,16 @@ compatibility_date = "2024-09-23"
 compatibility_flags = ["nodejs_compat"]
 pages_build_output_dir = "dist"
 
-# Cloudflare D1 Database Binding
-# Execute: wrangler d1 create flarenav_db
-# Then replace database_id below with your D1 UUID
-[[d1_databases]]
-binding = "DB"
-database_name = "flarenav_db"
-database_id = "YOUR_CLOUDFLARE_D1_DATABASE_ID"
+# [可选方式一] 如果使用 wrangler.toml 绑定 D1：
+# 请执行 npx wrangler d1 create flarenav_db 获取真实的 UUID，取消下方注释并填入：
+# [[d1_databases]]
+# binding = "DB"
+# database_name = "flarenav_db"
+# database_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+
+# [推荐方式二] 直接在 Cloudflare Pages 控制台绑定（无需在文件中填写 ID）：
+# 进入 Pages 控制台 -> Settings -> Functions -> D1 database bindings -> 添加 Variable name 为 DB，选择 flarenav_db 即可
 
 [vars]
-ADMIN_SECRET_KEY = "flarenav-secret-admin-key"
+ADMIN_SECRET_KEY = "admin123"
 SITE_NAME = "FlareNav"

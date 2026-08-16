@@ -54,7 +54,6 @@ npx wrangler login
 # 创建 D1 数据库
 npx wrangler d1 create flarenav_db
 ```
-执行后复制命令行输出的 `database_id`，粘贴到 `wrangler.toml` 文件中对应字段。
 
 ### 第二步：初始化 SQLite 数据表
 ```bash
@@ -71,6 +70,7 @@ npx wrangler d1 execute flarenav_db --file=./schema.sql --remote
 4. 进入 Pages 项目详情页：**Settings > Functions > D1 database bindings**，添加绑定：
    - **Variable name**: `DB`
    - **D1 database**: 选择 `flarenav_db`
+   > 💡 **提示**：直接在控制台绑定 D1 即可，无需在 `wrangler.toml` 中填写占位 ID，可避免 `Error 8000022: Invalid database UUID` 报错。
 5. （可选）在 **Settings > Environment variables** 中添加 `ADMIN_SECRET_KEY` 作为您的自定义管理密钥（默认值为 `admin123`）。
 
 ---
