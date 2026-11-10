@@ -19,7 +19,7 @@ import {
   fetchAuthStatus,
 } from './services/api';
 import { Header } from './components/Header';
-import { CategorySidebar } from './components/CategorySidebar';
+import { CategoryChips } from './components/CategoryChips';
 import { BookmarkGrid } from './components/BookmarkGrid';
 import { BookmarkModal } from './components/BookmarkModal';
 import { CategoryModal } from './components/CategoryModal';
@@ -29,12 +29,8 @@ import { DeployGuideModal } from './components/DeployGuideModal';
 import { ZeroTrustGuideModal } from './components/ZeroTrustGuideModal';
 import { StatsModal } from './components/StatsModal';
 import { ImportExportModal } from './components/ImportExportModal';
-import { DynamicIcon } from './components/DynamicIcon';
 import {
   Sparkles,
-  Layers,
-  Star,
-  Flame,
   Chrome,
   Cloud,
   ShieldCheck,
@@ -266,68 +262,29 @@ export default function App() {
       />
 
       {/* Main Content Body */}
-      <main className="flex-1 w-full max-w-7xl 2xl:max-w-[1700px] 3xl:max-w-[1920px] mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
-        
-        {/* Mobile Horizontal Category Carousel Bar (Only visible on screens < lg) */}
-        <div className="lg:hidden mb-4 overflow-x-auto pb-1 scrollbar-none flex items-center gap-2">
-          <button
-            onClick={() => setActiveCategoryId('all')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition shrink-0 ${
-              activeCategoryId === 'all'
-                ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
-                : theme === 'light' ? 'bg-white text-slate-700 border border-slate-200' : 'bg-slate-900/80 text-slate-300 border border-slate-800'
-            }`}
-          >
-            <Layers size={13} />
-            <span>全部</span>
-            <span className="text-[10px] opacity-80 font-mono">({bookmarks.length})</span>
-          </button>
+      <main className="flex-1 w-full max-w-[2200px] mx-auto px-5 sm:px-6 lg:px-8 py-4 sm:py-6">
 
-          <button
-            onClick={() => setActiveCategoryId('pinned')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition shrink-0 ${
-              activeCategoryId === 'pinned'
-                ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
-                : theme === 'light' ? 'bg-white text-slate-700 border border-slate-200' : 'bg-slate-900/80 text-slate-300 border border-slate-800'
-            }`}
-          >
-            <Star size={13} className="text-yellow-400" />
-            <span>置顶</span>
-            <span className="text-[10px] opacity-80 font-mono">({bookmarks.filter(b => b.is_pinned).length})</span>
-          </button>
-
-          <button
-            onClick={() => setActiveCategoryId('popular')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition shrink-0 ${
-              activeCategoryId === 'popular'
-                ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
-                : theme === 'light' ? 'bg-white text-slate-700 border border-slate-200' : 'bg-slate-900/80 text-slate-300 border border-slate-800'
-            }`}
-          >
-            <Flame size={13} className="text-orange-400" />
-            <span>热门</span>
-          </button>
-
-          {categories.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => setActiveCategoryId(cat.id)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition shrink-0 ${
-                activeCategoryId === cat.id
-                  ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
-                  : theme === 'light' ? 'bg-white text-slate-700 border border-slate-200' : 'bg-slate-900/80 text-slate-300 border border-slate-800'
-              }`}
-            >
-              <DynamicIcon name={cat.icon} size={13} />
-              <span>{cat.name}</span>
-            </button>
-          ))}
-        </div>
-
-        <div className="flex flex-col lg:flex-row gap-5 lg:gap-6 items-start">
-          {/* Left Category Sidebar (Desktop & Tablets) */}
-          <div className="hidden lg:block w-64 shrink-0">
-            <CategorySidebar
+        {/* 通栏内容区：分类以横向标签形式渲染在标题行下方 */}
+        <BookmarkGrid
+          bookmarks={filteredBookmarks}
+          categories={categories}
+          activeCategoryId={activeCategoryId}
+          searchQuery={searchQuery}
+          isAdmin={isAdmin}
+          theme={theme}
+          onEditBookmark={(bm) => {
+            setEditingBookmark(bm);
+            setBookmarkModalOpen(true);
+          }}
+          onDeleteBookmark={handleDeleteBookmark}
+          onTogglePin={handleTogglePin}
+          onTrackClick={handleTrackClick}
+          onOpenAddBookmark={() => {
+            setEditingBookmark(null);
+            setBookmarkModalOpen(true);
+          }}
+          categoryChips={
+            <CategoryChips
               categories={categories}
               bookmarks={bookmarks}
               activeCategoryId={activeCategoryId}
@@ -342,42 +299,24 @@ export default function App() {
                 setCategoryModalOpen(true);
               }}
               onDeleteCategory={handleDeleteCategory}
+              theme={theme}
             />
-          </div>
-
-          {/* Right Main Grid */}
-          <div className="flex-1 min-w-0 w-full">
-            <BookmarkGrid
-              bookmarks={filteredBookmarks}
-              categories={categories}
-              activeCategoryId={activeCategoryId}
-              searchQuery={searchQuery}
-              isAdmin={isAdmin}
-              onEditBookmark={(bm) => {
-                setEditingBookmark(bm);
-                setBookmarkModalOpen(true);
-              }}
-              onDeleteBookmark={handleDeleteBookmark}
-              onTogglePin={handleTogglePin}
-              onTrackClick={handleTrackClick}
-              onOpenAddBookmark={() => {
-                setEditingBookmark(null);
-                setBookmarkModalOpen(true);
-              }}
-            />
-          </div>
-        </div>
+          }
+        />
       </main>
 
       {/* Footer */}
       <footer className={`w-full border-t py-5 mt-10 transition-colors ${
         theme === 'light' ? 'border-slate-200 bg-white/80 text-slate-500' : 'border-slate-800/80 bg-slate-950/60 text-slate-500'
       } backdrop-blur`}>
-        <div className="w-full max-w-7xl 2xl:max-w-[1700px] 3xl:max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-          <div className="flex items-center gap-2">
+        <div className="w-full max-w-[2200px] mx-auto px-5 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-2 gap-y-1">
             <span className={`font-bold ${theme === 'light' ? 'text-slate-800' : 'text-slate-300'}`}>FlareNav</span>
             <span>•</span>
             <span>自托管 Cloudflare Pages + D1 (SQLite) 架构</span>
+            <span className={`hidden lg:inline ${theme === 'light' ? 'text-slate-400' : 'text-slate-600'}`}>
+              基于 Cloudflare Pages + D1 (SQLite) 边缘数据库构建，全球高速访问，零服务器运维成本。
+            </span>
             {zeroTrustEmail && (
               <span className="hidden md:inline-flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
                 <ShieldCheck size={11} />

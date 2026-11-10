@@ -152,7 +152,7 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className={`w-full sticky top-0 z-40 backdrop-blur-xl border-b transition-colors duration-200 ${headerBgClass}`}>
-      <div className="w-full max-w-7xl 2xl:max-w-[1700px] 3xl:max-w-[1920px] mx-auto px-3 sm:px-6 lg:px-8 py-2.5">
+      <div className="w-full max-w-[2200px] mx-auto px-5 sm:px-6 lg:px-8 py-2.5">
         <div className="flex items-center justify-between gap-2 sm:gap-4 lg:gap-6">
           
           {/* 1. Left: Brand & Logo */}

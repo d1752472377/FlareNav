@@ -28,6 +28,8 @@ interface BookmarkGridProps {
   onTogglePin: (bm: Bookmark) => void;
   onTrackClick: (id: string) => void;
   onOpenAddBookmark: () => void;
+  /** 横向分类标签栏，渲染在标题行下方 */
+  categoryChips?: React.ReactNode;
   theme?: ThemeMode;
 }
 
@@ -42,10 +44,11 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
   onTogglePin,
   onTrackClick,
   onOpenAddBookmark,
+  categoryChips,
   theme = 'dark',
 }) => {
   const [layout, setLayout] = useState<ViewLayout>('grid');
-  const [sortBy, setSortBy] = useState<'default' | 'clicks' | 'alpha' | 'recent'>('default');
+  const [sortBy, setSortBy] = useState<'default' | 'clicks' | 'alpha' | 'recent'>('alpha');
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const isLight = theme === 'light';
@@ -113,7 +116,7 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
 
   const cardTitleColor = isLight ? 'text-slate-900 group-hover:text-amber-600' : 'text-slate-100 group-hover:text-amber-400';
   const cardDescColor = isLight ? 'text-slate-600' : 'text-slate-400';
-  const cardDomainColor = isLight ? 'text-slate-400' : 'text-slate-500';
+  const cardDomainColor = 'text-slate-500';
   const iconContainerBg = isLight ? 'bg-slate-100 border-slate-200' : 'bg-slate-800 border-slate-700/60';
 
   return (
@@ -138,10 +141,10 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
               onChange={(e) => setSortBy(e.target.value as any)}
               className="bg-transparent text-xs outline-none cursor-pointer"
             >
-              <option value="default" className={isLight ? 'bg-white text-slate-800' : 'bg-slate-900 text-slate-100'}>默认排序</option>
+              <option value="alpha" className={isLight ? 'bg-white text-slate-800' : 'bg-slate-900 text-slate-100'}>字母排序 A-Z（默认）</option>
+              <option value="default" className={isLight ? 'bg-white text-slate-800' : 'bg-slate-900 text-slate-100'}>置顶优先</option>
               <option value="clicks" className={isLight ? 'bg-white text-slate-800' : 'bg-slate-900 text-slate-100'}>按访问量 🔥</option>
               <option value="recent" className={isLight ? 'bg-white text-slate-800' : 'bg-slate-900 text-slate-100'}>最新收录 🕒</option>
-              <option value="alpha" className={isLight ? 'bg-white text-slate-800' : 'bg-slate-900 text-slate-100'}>字母排序 A-Z</option>
             </select>
           </div>
 
@@ -184,16 +187,22 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
         </div>
       </div>
 
+      {/* 横向分类标签（替代原左侧边栏） */}
+      {categoryChips && <div className="-mt-1">{categoryChips}</div>}
+
       {/* Main Grid View */}
       {sortedBookmarks.length > 0 ? (
         <div
-          className={`grid gap-3.5 sm:gap-4 transition-all duration-200 ${
+          className={`grid transition-all duration-200 ${
             layout === 'compact'
-              ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3'
-              : layout === 'bento'
-              ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5'
-              : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6'
+              ? 'gap-3.5 sm:gap-4 grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4'
+              : 'gap-4 sm:gap-5'
           }`}
+          style={
+            layout === 'compact'
+              ? undefined
+              : { gridTemplateColumns: 'repeat(auto-fill, minmax(min(320px, 100%), 1fr))' }
+          }
         >
           {sortedBookmarks.map((bm, index) => {
             const cat = getCategory(bm.category_id);
@@ -251,7 +260,7 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity pl-2">
                     <button
                       onClick={(e) => handleCopy(e, bm.url, bm.id)}
-                      className={`p-1.5 rounded-lg transition ${isLight ? 'hover:bg-slate-100 text-slate-400 hover:text-slate-700' : 'hover:bg-slate-800 text-slate-400 hover:text-slate-200'}`}
+                      className={`p-1.5 rounded-lg transition ${isLight ? 'hover:bg-slate-100 text-slate-500 hover:text-slate-700' : 'hover:bg-slate-800 text-slate-400 hover:text-slate-200'}`}
                       title="复制网址"
                     >
                       {copiedId === bm.id ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
@@ -273,7 +282,7 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
                             e.stopPropagation();
                             onEditBookmark(bm);
                           }}
-                          className={`p-1.5 rounded-lg transition ${isLight ? 'hover:bg-slate-100 text-slate-400 hover:text-amber-600' : 'hover:bg-slate-800 text-slate-400 hover:text-amber-400'}`}
+                          className={`p-1.5 rounded-lg transition ${isLight ? 'hover:bg-slate-100 text-slate-500 hover:text-amber-600' : 'hover:bg-slate-800 text-slate-400 hover:text-amber-400'}`}
                           title="编辑"
                         >
                           <Edit3 size={13} />
@@ -302,8 +311,8 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
               <div
                 key={bm.id}
                 onClick={() => handleCardClick(bm)}
-                className={`group relative flex flex-col justify-between p-3.5 sm:p-4 rounded-2xl border transition-all duration-200 ${cardBaseBg} ${
-                  isBentoHero ? 'sm:col-span-2 sm:row-span-1' : ''
+                className={`group relative flex flex-col justify-between p-4 sm:p-5 rounded-2xl border transition-all duration-200 ${cardBaseBg} ${
+                  isBentoHero ? 'xl:col-span-2' : ''
                 } ${
                   isPinned ? (isLight ? 'border-amber-300 ring-1 ring-amber-300/40 bg-amber-50/25' : 'border-amber-500/30 ring-1 ring-amber-500/10') : ''
                 }`}
@@ -312,11 +321,11 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
                   {/* Card Header: Icon + Category Badge + Pin Status */}
                   <div className="flex items-start justify-between gap-2 mb-2.5">
                     <div className="relative">
-                      <div className={`w-10 h-10 rounded-xl p-2 flex items-center justify-center border shadow-xs group-hover:scale-105 transition-transform ${iconContainerBg}`}>
+                      <div className={`w-12 h-12 rounded-xl p-2.5 flex items-center justify-center border shadow-xs group-hover:scale-105 transition-transform ${iconContainerBg}`}>
                         <img
                           src={bm.icon_url || `https://www.google.com/s2/favicons?domain=${getDomain(bm.url)}&sz=128`}
                           alt={bm.title}
-                          className="w-6 h-6 object-contain rounded"
+                          className="w-7 h-7 object-contain rounded"
                           loading="lazy"
                           onError={(e) => {
                             (e.target as HTMLElement).style.display = 'none';
@@ -324,8 +333,8 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
                         />
                       </div>
                       {isPinned && (
-                        <div className="absolute -top-1 -right-1 w-4 h-4 bg-amber-500 rounded-full flex items-center justify-center shadow-xs">
-                          <Star size={9} className="text-slate-950 fill-slate-950" />
+                        <div className="absolute -top-1 -right-1 w-5 h-5 bg-amber-500 rounded-full flex items-center justify-center shadow-xs">
+                          <Star size={10} className="text-slate-950 fill-slate-950" />
                         </div>
                       )}
                     </div>
@@ -333,7 +342,7 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
                     <div className="flex items-center gap-1.5">
                       {cat && (
                         <span
-                          className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                          className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
                           style={{
                             backgroundColor: `${cat.color || '#3b82f6'}18`,
                             color: cat.color || '#3b82f6',
@@ -343,8 +352,8 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
                         </span>
                       )}
                       {bm.click_count > 0 && (
-                        <span className={`text-[10px] font-mono flex items-center gap-0.5 ${isLight ? 'text-slate-400' : 'text-slate-500'}`}>
-                          <Eye size={10} />
+                        <span className="text-[11px] font-mono flex items-center gap-0.5 text-slate-500">
+                          <Eye size={11} />
                           <span>{bm.click_count}</span>
                         </span>
                       )}
@@ -359,27 +368,27 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
                     className="block group/link"
                   >
                     <div className="flex items-center gap-1">
-                      <h3 className={`text-xs sm:text-sm font-bold truncate transition-colors ${cardTitleColor}`}>
+                      <h3 className={`text-sm sm:text-base font-bold truncate transition-colors ${cardTitleColor}`}>
                         {bm.title}
                       </h3>
-                      <ExternalLink size={11} className="opacity-0 group-hover/link:opacity-100 transition-opacity shrink-0 text-slate-400" />
+                      <ExternalLink size={12} className="opacity-0 group-hover/link:opacity-100 transition-opacity shrink-0 text-slate-400" />
                     </div>
-                    <p className={`text-xs line-clamp-2 mt-1 min-h-[32px] leading-relaxed ${cardDescColor}`}>
+                    <p className={`text-[13px] line-clamp-2 mt-1.5 min-h-[38px] leading-relaxed ${cardDescColor}`}>
                       {bm.description || '点击直接在新标签页访问此站点...'}
                     </p>
                   </a>
                 </div>
 
                 {/* Footer URL Domain & Action Toolbar */}
-                <div className={`mt-3 pt-2.5 border-t flex items-center justify-between text-[11px] font-mono ${isLight ? 'border-slate-100 text-slate-400' : 'border-slate-800 text-slate-500'}`}>
-                  <span className="truncate max-w-[130px]" title={bm.url}>
+                <div className={`mt-3.5 pt-3 border-t flex items-center justify-between text-[11px] font-mono ${isLight ? 'border-slate-100 text-slate-500' : 'border-slate-800 text-slate-500'}`}>
+                  <span className="truncate max-w-[60%]" title={bm.url}>
                     {getDomain(bm.url)}
                   </span>
 
                   <div className="flex items-center gap-1">
                     <button
                       onClick={(e) => handleCopy(e, bm.url, bm.id)}
-                      className={`p-1 rounded-md transition ${isLight ? 'hover:bg-slate-100 text-slate-400 hover:text-slate-700' : 'hover:bg-slate-800 text-slate-400 hover:text-slate-200'}`}
+                      className={`p-1 rounded-md transition ${isLight ? 'hover:bg-slate-100 text-slate-500 hover:text-slate-700' : 'hover:bg-slate-800 text-slate-400 hover:text-slate-200'}`}
                       title="复制直达链接"
                     >
                       {copiedId === bm.id ? (
@@ -408,7 +417,7 @@ export const BookmarkGrid: React.FC<BookmarkGridProps> = ({
                             e.stopPropagation();
                             onEditBookmark(bm);
                           }}
-                          className={`p-1 rounded-md transition ${isLight ? 'hover:bg-slate-100 text-slate-400 hover:text-amber-600' : 'hover:bg-slate-800 text-slate-400 hover:text-amber-400'}`}
+                          className={`p-1 rounded-md transition ${isLight ? 'hover:bg-slate-100 text-slate-500 hover:text-amber-600' : 'hover:bg-slate-800 text-slate-400 hover:text-amber-400'}`}
                           title="编辑书签"
                         >
                           <Edit3 size={12} />
